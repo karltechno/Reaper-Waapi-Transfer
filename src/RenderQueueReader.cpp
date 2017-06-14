@@ -199,7 +199,7 @@ ReaperTrack &ParseTrack(std::ifstream &fstream, ReaperTrack &track)
             {
                 int selected;
                 lineStream >> selected;
-                track.isSelected = static_cast<bool>(selected);
+                track.isSelected = selected;
                 continue;
             }
 

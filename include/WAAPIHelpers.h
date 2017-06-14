@@ -11,8 +11,16 @@
 
 #include "config.h"
 
+
 //////////////////////////////////////////////////////////////////////////
 //Helpers calling Waapi
+
+enum class WAAPIImportOperation
+{
+    createNew,
+    useExisting,
+    replaceExisting
+};
 
 //get items selected in wwise authoring application, return if waapi call was successful
 bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &resultsOut, 
@@ -65,13 +73,6 @@ private:
     static HIMAGELIST imageList;
 };
 
-
-enum class WAAPIImportOperation
-{
-    createNew,
-    useExisting,
-    replaceExisting
-};
 
 inline std::string GetImportOperationString(WAAPIImportOperation operation)
 {

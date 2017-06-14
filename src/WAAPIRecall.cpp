@@ -25,10 +25,7 @@ void WAAPIRecall::UpdateWwiseObjects()
     }
     
     AkJson::Array resultsArray;
-    if (!GetWaapiResultsArray(resultsArray, results))
-    {
-        return;
-    }
+    GetWaapiResultsArray(resultsArray, results);
 
     std::vector<RecallItem> validItems;
 
