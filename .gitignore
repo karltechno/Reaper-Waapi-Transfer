@@ -1,3 +1,5 @@
 build/
-resources/icons/
-include/AkAutobahn
+resources/icons/*
+!resources/icons/.gitempty
+include/AkAutobahn/*
+!include/AkAutobahn/.gitempty
