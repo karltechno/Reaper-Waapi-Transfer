@@ -459,7 +459,7 @@ void ParseRenderQueue(const fs::path &path)
 
 
 
-//simple parsing just for 
+//simple parser just for render item path before we implement searching
 std::vector<RenderItem> ParseRenderQueueFile(const fs::path &path)
 {
     std::vector<RenderItem> items;

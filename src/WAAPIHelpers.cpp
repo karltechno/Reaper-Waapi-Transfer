@@ -41,7 +41,7 @@ int WwiseImageList::GetIconForWwiseType(const std::string wwiseType)
 }
 
 
-bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &results, 
+bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &resultsOut, 
                                 AK::WwiseAuthoringAPI::Client &client, 
                                 bool GetNotes)
 {
@@ -64,7 +64,40 @@ bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &results,
     }
 
 
-    return client.Call(ak::wwise::ui::getSelectedObjects, AkJson(AkJson::Map()), options, results);
+    return client.Call(ak::wwise::ui::getSelectedObjects, AkJson(AkJson::Map()), options, resultsOut);
+}
+
+void GetWaapiResultsArray(AK::WwiseAuthoringAPI::AkJson::Array &arrayIn,
+                          AK::WwiseAuthoringAPI::AkJson &results)
+{
+    using namespace AK::WwiseAuthoringAPI;
+    switch (results.GetType())
+    {
+    case AkJson::Type::Map:
+    {
+        if (results.HasKey("objects"))
+        {
+            arrayIn = results["objects"].GetArray();
+            return;
+        }
+        else if (results.HasKey("return"))
+        {
+            arrayIn = results["return"].GetArray();
+            return;
+        }
+        else
+        {
+            assert(!"Not implemented.");
+            return;
+        }
+
+    } break;
+
+
+    default:
+        assert(!"Not implemented.");
+        return;
+    }
 }
 
 bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path, 

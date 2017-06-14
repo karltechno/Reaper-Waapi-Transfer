@@ -117,6 +117,7 @@ void WAAPITransfer::RecreateTransferListView()
 
     for (auto &renderItemPair : renderQueueItems)
     {
+        //update mapped id cached in the render item
         renderItemPair.second.second = AddRenderItemToView(renderItemPair.first, renderItemPair.second.first);
     }
 }
@@ -190,7 +191,7 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
 
 void WAAPITransfer::SetSelectedDialogLanguage(int wwiseLanguageIndex)
 {
-    char strbuff[256];
+    char strbuff[MAX_PATH];
     strcpy(strbuff, WwiseLanguages[wwiseLanguageIndex]);
 
     ForEachSelectedRenderItem([wwiseLanguageIndex, &strbuff, this](MappedListViewID mapped, uint32 index) 
@@ -487,7 +488,7 @@ WAAPITransfer::MappedListViewID WAAPITransfer::AddWwiseObjectToView(const std::s
     m_wwiseListViewMap.insert({ mappedId, guid });
 
     {
-        char strBuff[256];
+        char strBuff[MAX_PATH];
         strcpy(strBuff, wwiseObject.path.c_str());
         ListView_SetItemText(wwiseListview, insertedItem, WwiseViewSubItemID::Path, strBuff);
     }
@@ -554,23 +555,23 @@ WAAPITransfer::MappedListViewID WAAPITransfer::AddRenderItemToView(RenderItemID 
 
     {
         const std::string importText = GetTextForImportObject(renderItem.importObjectType);
-        char strBuff[256];
+        char strBuff[MAX_PATH];
         strcpy(strBuff, importText.c_str());
         ListView_SetItemText(dlg, insertedItem, RenderViewSubitemID::WwiseImportObjectType, strBuff);
     }
     {
-        char strBuff[256];
+        char strBuff[MAX_PATH];
         strcpy(strBuff, WwiseLanguages[renderItem.wwiseLanguageIndex]);
         ListView_SetItemText(dlg, insertedItem, RenderViewSubitemID::WwiseLanguage, strBuff);
     }
     {
-        char strBuff[256];
+        char strBuff[MAX_PATH];
         strcpy(strBuff, renderItem.wwiseParentName.c_str());
         ListView_SetItemText(dlg, insertedItem, RenderViewSubitemID::WwiseParent, strBuff);
     }
     {
         const std::string importString = GetImportOperationString(renderItem.importOperation);
-        char strBuff[64];
+        char strBuff[MAX_PATH];
         strcpy(strBuff, importString.c_str());
         ListView_SetItemText(dlg, insertedItem, RenderViewSubitemID::WaapiImportOperation, strBuff);
     }

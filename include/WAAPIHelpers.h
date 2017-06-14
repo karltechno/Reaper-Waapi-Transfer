@@ -11,61 +11,49 @@
 
 #include "config.h"
 
+//////////////////////////////////////////////////////////////////////////
+//Helpers calling Waapi
 
-inline bool IsParentType(const std::string &wwiseType)
-{
-    return WwiseParentTypes.find(wwiseType) != WwiseParentTypes.end();
-}
-
-bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &resultsMap, 
+//get items selected in wwise authoring application, return if waapi call was successful
+bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &resultsOut, 
                                 AK::WwiseAuthoringAPI::Client &client, 
                                 bool getNotes = false);
 
-inline bool GetWaapiResultsArray(AK::WwiseAuthoringAPI::AkJson::Array &arrayIn, 
-                                 AK::WwiseAuthoringAPI::AkJson &results)
-{
-    using namespace AK::WwiseAuthoringAPI;
-    switch (results.GetType())
-    {
-    case AkJson::Type::Map:
-    {
-        if (results.HasKey("objects"))
-        {
-            arrayIn = results["objects"].GetArray();
-            return true;
-        }
-        else if (results.HasKey("return"))
-        {
-            arrayIn = results["return"].GetArray();
-            return true;
-        }
-        else
-        {
-            assert(!"Not implemented.");
-        }
 
-    } break;
+//get children of a given waapi path, returns if waapi call was successful
+bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path,
+                 AK::WwiseAuthoringAPI::AkJson &resultsOut,
+                 AK::WwiseAuthoringAPI::Client &client,
+                 bool getNotes = false);
+
+//get the array for a succesfull call to any of the above functions, results is 'resultsOut' from above functions
+void GetWaapiResultsArray(AK::WwiseAuthoringAPI::AkJson::Array &arrayIn,
+                          AK::WwiseAuthoringAPI::AkJson &results);
 
 
-    default:
-        assert(!"Not implemented.");
-        return false;
-    }
-
-    return false;
-}
-
+//get the error message for an unsuccessful waapi call to the above functions
 inline const std::string &GetResultsErrorMessage(AK::WwiseAuthoringAPI::AkJson &resultsIn)
 {
     return resultsIn.GetMap()["message"].GetVariant().GetString();
 }
 
-bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path,
-                 AK::WwiseAuthoringAPI::AkJson &resultsIn,
-                 AK::WwiseAuthoringAPI::Client &client,
-                 bool getNotes = false);
+
+//Import given items, returns if waapi call was successful
+bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
+                      AK::WwiseAuthoringAPI::Client &client,
+                      WAAPIImportOperation importOperation);
+
+//////////////////////////////////////////////////////////////////////////
 
 
+//Check if type is usable for importing render items into
+inline bool IsParentType(const std::string &wwiseType)
+{
+    return WwiseParentTypes.find(wwiseType) != WwiseParentTypes.end();
+}
+
+
+//Holds win32 image list and map of wwise types to their image ID in the list
 class WwiseImageList
 {
 public:
@@ -76,6 +64,7 @@ private:
     static std::unordered_map<std::string, int> iconList;
     static HIMAGELIST imageList;
 };
+
 
 enum class WAAPIImportOperation
 {
@@ -103,6 +92,3 @@ inline std::string GetImportOperationString(WAAPIImportOperation operation)
     }
 }
 
-bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
-                      AK::WwiseAuthoringAPI::Client &client,
-                      WAAPIImportOperation importOperation);
