@@ -148,27 +148,9 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
             }
         } break;
         
-        case IDC_SELECT_ALL_RENDER_ITEMS:
-        {
-            //select all listview items
-            HWND listView = transfer->GetRenderViewHWND();
-            int listItem = SendMessage(listView, LVM_GETNEXTITEM, -1, LVNI_ALL);
-            while (listItem != -1)
-            {
-                ListView_SetItemState(listView, listItem, LVIS_SELECTED, LVIS_SELECTED);
-                listItem = SendMessage(listView, LVM_GETNEXTITEM, listItem, LVNI_ALL);
-            }
-
-        } break;
-
         case IDC_IMPORT_SETTINGS_BUTTON:
         {
             OpenImportSettingsWindow(hwndDlg, reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA)));
-        } break;
-
-        case IDC_ABOUT:
-        {
-            CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_ABOUT), hwndDlg, AboutWindowProc);
         } break;
 
         default:
@@ -177,6 +159,27 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
         
         }
         
+    } break;
+
+    case WM_MENUSELECT:
+    {
+        auto uItem = (UINT)LOWORD(wParam);
+        auto fuFlags = (UINT)HIWORD(wParam);
+        switch (uItem)
+        {
+        case IDR_ABOUT_BUTTON:
+        {
+            if (fuFlags & MF_MOUSESELECT)
+            {
+                CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_ABOUT), hwndDlg, AboutWindowProc);
+            }
+        } break;
+
+        default:
+        {
+        } break;
+        }
+
     } break;
 
     case WM_TIMER:

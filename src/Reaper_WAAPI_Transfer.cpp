@@ -78,6 +78,8 @@ extern "C"
         GET_FUNC_AND_CHKERROR(GetTrackGUID);
         GET_FUNC_AND_CHKERROR(guidToString);
         GET_FUNC_AND_CHKERROR(GetSetMediaTrackInfo_String);
+        GET_FUNC_AND_CHKERROR(CountTracks);
+        GET_FUNC_AND_CHKERROR(CountProjectMarkers);
 
         //exit if any func pointer couldn't be found
         if (funcerrcnt)

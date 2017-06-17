@@ -514,8 +514,8 @@ void WAAPITransfer::RemoveRenderItemsByProject(RenderProjectMap::iterator it)
 void WAAPITransfer::AddRenderItemsByProject(const fs::path &path)
 {
     //for testing 
-    ParseRenderQueue(path);
-    auto newFiles = ParseRenderQueueFile(path);
+    auto newFiles = ParseRenderQueue(path);
+    //auto newFiles = ParseRenderQueueFile(path);
     //add to render project cache
     std::vector<uint32> renderIds;
     renderIds.reserve(newFiles.size());
@@ -612,7 +612,6 @@ void WAAPITransfer::WaapiImportLoop()
         fs::copy_file(renderQueueItemPath.first, copy);
     }
 
-
     //Get reaper project path for tagging in wwise notes
     char reaprojectPath[MAX_PATH];
     EnumProjects(-1, reaprojectPath, MAX_PATH);
@@ -641,7 +640,9 @@ void WAAPITransfer::WaapiImportLoop()
             {
                 break;
             }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
             //reaper deletes the file when it's done rendering
             if (!fs::exists(iter->first))
             {
@@ -685,7 +686,7 @@ void WAAPITransfer::WaapiImportLoop()
         }
     }
 
-    for (const auto& file : backupsToRestore)
+    for (const auto &file : backupsToRestore)
     {
         fs::rename(file + RENDER_QUEUE_BACKUP_APPEND, file);
     }
@@ -741,6 +742,12 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
         {
             const RenderItem &renderItem = GetRenderItemFromRenderItemId(renderIdVec[i + (batch * WAAPI_IMPORT_BATCH_SIZE)]);
             
+            //check if object has wwise GUID attached
+            if (renderItem.wwiseGuid == "")
+            {
+                continue;
+            }
+
             AkJson importItem = AkJson(AkJson::Map{
                 { "audioFile", AkVariant(renderItem.audioFilePath.generic_string()) },
                 { "importLocation", AkVariant(renderItem.wwiseGuid) },

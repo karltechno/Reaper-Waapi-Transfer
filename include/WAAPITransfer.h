@@ -22,6 +22,8 @@ public:
     WAAPITransfer(const WAAPITransfer&) = delete;
     WAAPITransfer &operator=(const WAAPITransfer&) = delete;
 
+    friend class TransferSearch;
+
     //Column id's in render item listview
     enum RenderViewSubitemID
     {

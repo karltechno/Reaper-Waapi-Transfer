@@ -27,7 +27,7 @@
 
 
  - Regions:
-             region id    time (dont care)            name    RenderSettingsId     Not sure what the rest of this is, doesn't seem relevant ATM.
+             region id    time (dont care for now)     name    RenderSettingsId     Not sure what the rest of this is, doesn't seem relevant ATM.
       MARKER     2        6.67291127704084            "NAME"       5               0          1       R
 
 
@@ -329,7 +329,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
     }
 }
 
-void ParseRenderQueue(const fs::path &path)
+std::vector<RenderItem> ParseRenderQueue(const fs::path &path)
 {
     std::vector<ReaperTrack> selectedTracks;
     std::vector<ReaperRegion> regions;
@@ -343,7 +343,7 @@ void ParseRenderQueue(const fs::path &path)
 
     if (!fileReader.is_open())
     {
-        return;
+        return renderItems;
     }
 
     std::string line;
@@ -455,6 +455,7 @@ void ParseRenderQueue(const fs::path &path)
     }
 
     AddRenderInfo(selectedTracks, regions, renderItems, projectRangeMode, projectRenderSourceFlags);
+    return renderItems;
 }
 
 

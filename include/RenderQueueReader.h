@@ -28,14 +28,10 @@ enum RenderItemFlags
     RenderMatrixSourceSelectedTrack     = 1 << 7
 };
 
-
-
 fs::path GetRenderQueueDir();
 
 std::vector<RenderItem> ParseRenderQueueFile(const fs::path &path);
 
-//in progress
-void ParseRenderQueue(const fs::path &path);
+std::vector<RenderItem> ParseRenderQueue(const fs::path &path);
 
 std::vector<fs::path> GetRenderQueueProjectFiles();
-

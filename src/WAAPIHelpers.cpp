@@ -111,7 +111,8 @@ bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path,
         { "from", AkJson::Map{
             { "path", AkJson::Array{ path } } } },
             { "transform",
-            { AkJson::Array{ AkJson::Map{ { "select", AkJson::Array{ { "children" } } } } } } }
+            { AkJson::Array{ AkJson::Map{ { "select", AkJson::Array{ { "children" } } } } } }
+        }
     });
 
     AkJson options(AkJson::Map{
@@ -121,7 +122,8 @@ bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path,
         AkVariant("path"), 
         AkVariant("type"), 
         AkVariant("parent"),
-        AkVariant("childrenCount") } }
+        AkVariant("childrenCount") 
+    }}
     });
 
     if (getNotes)
