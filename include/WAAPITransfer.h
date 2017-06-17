@@ -21,22 +21,6 @@ public:
 
     WAAPITransfer(const WAAPITransfer&) = delete;
     WAAPITransfer &operator=(const WAAPITransfer&) = delete;
-     
-
-    using MappedListViewID = int32;
-    using RenderItemID = uint32;
-
-    struct WwiseObject
-    {
-        std::string name;
-        std::string type;
-        std::string path;
-        std::unordered_set<RenderItemID> renderChildren;
-
-        //Currently 'type' is just used for the icon decoration, only music segment changes
-        //functionality as it dictates what object type a render child of a wwise object can be
-        bool isMusicSegment;
-    };
 
     //Column id's in render item listview
     enum RenderViewSubitemID
@@ -53,10 +37,6 @@ public:
         Name = 0,
         Path = 1,
     };
-
-    using RenderItemMap = std::unordered_map<RenderItemID, std::pair<RenderItem, MappedListViewID>>;
-    using RenderProjectMap = std::unordered_map<std::string, std::vector<RenderItemID>>;
-    using WwiseObjectMap = std::unordered_map<std::string, WwiseObject>;
 
     //connect to wwise client and update status text
     bool Connect();
@@ -121,13 +101,13 @@ public:
     void SetRenderItemOutputName(MappedListViewID mappedIndex, const std::string &newOutputName);
 
     //Gets the render item associated with an render item ID
-    RenderItem &GetRenderItemFromRenderItemId(RenderItemID renderItemId) const;
+    RenderItem &GetRenderItemFromRenderItemId(RenderItemID renderItemId);
 
     //Gets the render item associated with an mapped listview ID
-    RenderItem &GetRenderItemFromListviewId(MappedListViewID mappedListId) const;
+    RenderItem &GetRenderItemFromListviewId(MappedListViewID mappedListId);
 
     //Retrieves a wwise object by guid (from the internal active wwise objects view) 
-    WwiseObject &GetWwiseObjectByGUID(const std::string &guid) const;
+    WwiseObject &GetWwiseObjectByGUID(const std::string &guid);
 
     //last import operation selected - thanks Tom!
     static WAAPIImportOperation lastImportOperation;
@@ -197,7 +177,6 @@ private:
     
     bool WaapiImportByProject(RenderProjectMap::iterator projectIter, const std::string &RecallProjectPath);
     bool WaapiImportByProject(const std::string &projectPath, const std::string &RecallProjectPath);
-
 
     //Map list view id to the wwise GUID;
     std::unordered_map<MappedListViewID, std::string> m_wwiseListViewMap;

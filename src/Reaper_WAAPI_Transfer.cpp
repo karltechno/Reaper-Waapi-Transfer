@@ -74,6 +74,10 @@ extern "C"
         GET_FUNC_AND_CHKERROR(IsREAPER);
         GET_FUNC_AND_CHKERROR(Splash_GetWnd);
         GET_FUNC_AND_CHKERROR(EnumProjectMarkers);
+        GET_FUNC_AND_CHKERROR(GetTrack);
+        GET_FUNC_AND_CHKERROR(GetTrackGUID);
+        GET_FUNC_AND_CHKERROR(guidToString);
+        GET_FUNC_AND_CHKERROR(GetSetMediaTrackInfo_String);
 
         //exit if any func pointer couldn't be found
         if (funcerrcnt)

@@ -8,6 +8,7 @@
 
 #include "WwiseSettingsReader.h"
 #include "config.h"
+#include "WAAPIHelpers.h"
 
 bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
 {

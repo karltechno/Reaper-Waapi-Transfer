@@ -1,22 +1,8 @@
 #pragma once
 #include <string>
-#include <set>
+#include <unordered_set>
 
 #include "types.h"
-
-#define FILESYSTEM_EXPERIMENTAL
-
-#ifdef FILESYSTEM_EXPERIMENTAL
-#include <filesystem>
-namespace fs = std::experimental::filesystem;
-#endif
-#ifdef FILESYSTEM_NATIVE
-#include <filesystem> 
-namespace fs = std::filesystem;
-#endif
-#ifdef FILESYSTEM_BOOST
-namespace fs = boost::filesystem;
-#endif
 
 //https://www.audiokinetic.com/library/edge/?source=Help&id=understanding_naming_conventions_in_wwise
 constexpr uint32 WWISE_NAME_MAX_LEN = 260;
@@ -78,7 +64,7 @@ static const char *WwiseLanguages[] =
 };
 
 
-static const std::set<std::string> WwiseParentTypes
+static const std::unordered_set<std::string> WwiseParentTypes
 {
     "Folder",
     "WorkUnit",
@@ -89,26 +75,3 @@ static const std::set<std::string> WwiseParentTypes
     "MusicSegment"
 };
 
-
-//http://the-witness.net/news/2012/11/scopeexit-in-c11/
-template <typename F>
-struct ScopeExit
-{
-    ScopeExit(F f) : f(f) {}
-    ~ScopeExit() { f(); }
-    F f;
-};
-
-template <typename F>
-ScopeExit<F> MakeScopeExit(F f)
-{
-    return ScopeExit<F>(f);
-};
-#define STRING_JOIN2(arg1, arg2) DO_STRING_JOIN2(arg1, arg2)
-#define DO_STRING_JOIN2(arg1, arg2) arg1 ## arg2
-#define SCOPE_EXIT(code) \
-    auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
-
-
-//https://herbsutter.com/2009/10/18/mailbag-shutting-up-compiler-warnings/
-template<class T> void ignore(const T&) {}

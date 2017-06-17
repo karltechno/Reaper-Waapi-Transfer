@@ -10,17 +10,12 @@
 #include <AkAutobahn\Client.h>
 
 #include "config.h"
+#include "types.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 //Helpers calling Waapi
 
-enum class WAAPIImportOperation
-{
-    createNew,
-    useExisting,
-    replaceExisting
-};
 
 //get items selected in wwise authoring application, return if waapi call was successful
 bool GetAllSelectedWwiseObjects(AK::WwiseAuthoringAPI::AkJson &resultsOut, 
@@ -93,3 +88,27 @@ inline std::string GetImportOperationString(WAAPIImportOperation operation)
     }
 }
 
+
+
+//http://the-witness.net/news/2012/11/scopeexit-in-c11/
+template <typename F>
+struct ScopeExit
+{
+    ScopeExit(F f) : f(f) {}
+    ~ScopeExit() { f(); }
+    F f;
+};
+
+template <typename F>
+ScopeExit<F> MakeScopeExit(F f)
+{
+    return ScopeExit<F>(f);
+};
+#define STRING_JOIN2(arg1, arg2) DO_STRING_JOIN2(arg1, arg2)
+#define DO_STRING_JOIN2(arg1, arg2) arg1 ## arg2
+#define SCOPE_EXIT(code) \
+    auto STRING_JOIN2(scope_exit_, __LINE__) = MakeScopeExit([=](){code;})
+
+
+//https://herbsutter.com/2009/10/18/mailbag-shutting-up-compiler-warnings/
+template<class T> void ignore(const T&) {}

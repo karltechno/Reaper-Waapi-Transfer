@@ -238,7 +238,7 @@ void WAAPITransfer::UpdateRenderQueue()
 
 }
 
-RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItemId) const 
+RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItemId)
 {
     //maybe we should change to nested maps, oh well
     auto iter = renderQueueItems.find(renderItemId);
@@ -246,14 +246,14 @@ RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItem
     return iter->second.first;
 }
 
-RenderItem &WAAPITransfer::GetRenderItemFromListviewId(MappedListViewID mappedListId) const
+RenderItem &WAAPITransfer::GetRenderItemFromListviewId(MappedListViewID mappedListId)
 {
     auto renderId = m_renderListViewMap.find(mappedListId);
     assert(renderId != m_renderListViewMap.end());
     return GetRenderItemFromRenderItemId(renderId->second);
 }
 
-WAAPITransfer::WwiseObject &WAAPITransfer::GetWwiseObjectByGUID(const std::string &guid) const
+WwiseObject &WAAPITransfer::GetWwiseObjectByGUID(const std::string &guid)
 {
     auto foundIt = activeWwiseObjects.find(guid);
     assert(foundIt != activeWwiseObjects.end());
@@ -419,7 +419,7 @@ void WAAPITransfer::AddSelectedWwiseObjects()
 
 }
 
-void WAAPITransfer::RemoveWwiseObject(WAAPITransfer::MappedListViewID toRemove)
+void WAAPITransfer::RemoveWwiseObject(MappedListViewID toRemove)
 {
     auto treeIter = m_wwiseListViewMap.find(toRemove);
 
@@ -459,14 +459,14 @@ void WAAPITransfer::SetupAndRecreateWindow()
 }
 
 
-WAAPITransfer::MappedListViewID WAAPITransfer::CreateWwiseObject(const std::string &guid, const WwiseObject &wwiseInfo)
+MappedListViewID WAAPITransfer::CreateWwiseObject(const std::string &guid, const WwiseObject &wwiseInfo)
 {
     activeWwiseObjects.insert({ guid, wwiseInfo });
     
     return AddWwiseObjectToView(guid, wwiseInfo);
 }
 
-WAAPITransfer::MappedListViewID WAAPITransfer::AddWwiseObjectToView(const std::string &guid, const WwiseObject &wwiseObject)
+MappedListViewID WAAPITransfer::AddWwiseObjectToView(const std::string &guid, const WwiseObject &wwiseObject)
 {
     auto wwiseListview = GetWwiseObjectListHWND();
 
@@ -529,7 +529,7 @@ void WAAPITransfer::AddRenderItemsByProject(const fs::path &path)
     renderQueueCachedProjects.insert({ path.generic_string(), renderIds });
 }
 
-WAAPITransfer::RenderItemID WAAPITransfer::CreateRenderItem(const RenderItem &renderItem)
+RenderItemID WAAPITransfer::CreateRenderItem(const RenderItem &renderItem)
 {
 
     RenderItemID renderId = RenderItemIdCounter++;
@@ -538,7 +538,7 @@ WAAPITransfer::RenderItemID WAAPITransfer::CreateRenderItem(const RenderItem &re
     return renderId;
 }
 
-WAAPITransfer::MappedListViewID WAAPITransfer::AddRenderItemToView(RenderItemID renderId, const RenderItem &renderItem)
+MappedListViewID WAAPITransfer::AddRenderItemToView(RenderItemID renderId, const RenderItem &renderItem)
 {
     char text[WWISE_NAME_MAX_LEN];
     strcpy(text, renderItem.outputFileName.c_str());
@@ -581,7 +581,7 @@ WAAPITransfer::MappedListViewID WAAPITransfer::AddRenderItemToView(RenderItemID 
 }
 
 
-WAAPITransfer::RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(WAAPITransfer::RenderItemMap::iterator it)
+RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(RenderItemMap::iterator it)
 {
     const HWND listView = GetRenderViewHWND();
     int indexToRemove = ListView_MapIDToIndex(listView, it->second.second);
@@ -593,7 +593,7 @@ WAAPITransfer::RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(W
     return renderQueueItems.erase(it);
 }
 
-WAAPITransfer::RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(uint32 renderItemId)
+RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(uint32 renderItemId)
 {
     auto iter = renderQueueItems.find(renderItemId);
     assert(iter != renderQueueItems.end());
@@ -917,10 +917,10 @@ void WAAPITransfer::SetRenderItemOutputName(MappedListViewID mappedIndex, const 
 
 
 //Persistent statics
-WAAPITransfer::RenderItemMap WAAPITransfer::renderQueueItems = RenderItemMap{};
-WAAPITransfer::RenderProjectMap WAAPITransfer::renderQueueCachedProjects = RenderProjectMap{};
+RenderItemMap WAAPITransfer::renderQueueItems = RenderItemMap{};
+RenderProjectMap WAAPITransfer::renderQueueCachedProjects = RenderProjectMap{};
 
-WAAPITransfer::WwiseObjectMap WAAPITransfer::activeWwiseObjects = WwiseObjectMap{};
+WwiseObjectMap WAAPITransfer::activeWwiseObjects = WwiseObjectMap{};
 
 uint32 WAAPITransfer::RenderItemIdCounter = 0;
 
