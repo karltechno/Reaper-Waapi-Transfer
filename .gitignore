@@ -3,3 +3,4 @@ resources/icons/*
 !resources/icons/.gitempty
 include/AkAutobahn/*
 !include/AkAutobahn/.gitempty
+*.aps
