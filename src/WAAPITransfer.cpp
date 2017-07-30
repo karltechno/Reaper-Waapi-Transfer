@@ -4,6 +4,7 @@
 #include <sstream>
 #include <thread>
 #include <algorithm>
+#include <chrono>
 
 #include "resource.h"
 
@@ -235,7 +236,6 @@ void WAAPITransfer::UpdateRenderQueue()
                        AddRenderItemsByProject(path);
                    }
                    });
-
 }
 
 RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItemId)
@@ -257,7 +257,6 @@ WwiseObject &WAAPITransfer::GetWwiseObjectByGUID(const std::string &guid)
 {
     auto foundIt = activeWwiseObjects.find(guid);
     assert(foundIt != activeWwiseObjects.end());
-
     return foundIt->second;
 }
 
@@ -426,14 +425,14 @@ void WAAPITransfer::RemoveWwiseObject(MappedListViewID toRemove)
     if (treeIter != m_wwiseListViewMap.end())
     {
         const auto &renderIdSet = GetWwiseObjectByGUID(treeIter->second).renderChildren;
-        for (const auto& id : renderIdSet)
+        for (const RenderItemID& id : renderIdSet)
         {
             RemoveRenderItemWwiseParent(id);
         }
 
         activeWwiseObjects.erase(treeIter->second);
         m_wwiseListViewMap.erase(treeIter);
-        auto wwiseView = GetWwiseObjectListHWND();
+        HWND wwiseView = GetWwiseObjectListHWND();
         ListView_DeleteItem(wwiseView, ListView_MapIDToIndex(wwiseView, toRemove));
     }
 }
@@ -514,27 +513,25 @@ void WAAPITransfer::RemoveRenderItemsByProject(RenderProjectMap::iterator it)
 void WAAPITransfer::AddRenderItemsByProject(const fs::path &path)
 {
     //for testing 
-    auto newFiles = ParseRenderQueue(path);
-    //auto newFiles = ParseRenderQueueFile(path);
+    auto newRenderItems = ParseRenderQueue(path);
+    //auto newRenderItems = ParseRenderQueueFile(path);
     //add to render project cache
     std::vector<uint32> renderIds;
-    renderIds.reserve(newFiles.size());
-    for (auto& file : newFiles)
+    renderIds.reserve(newRenderItems.size());
+    for (auto& renderItem : newRenderItems)
     {
         //get previous import type
-        file.importOperation = lastImportOperation;
+        renderItem.importOperation = lastImportOperation;
         //add lvitem
-        renderIds.push_back(CreateRenderItem(file));
+        renderIds.push_back(CreateRenderItem(renderItem));
     }
     renderQueueCachedProjects.insert({ path.generic_string(), renderIds });
 }
 
 RenderItemID WAAPITransfer::CreateRenderItem(const RenderItem &renderItem)
 {
-
-    RenderItemID renderId = RenderItemIdCounter++;
+    const RenderItemID renderId = RenderItemIdCounter++;
     renderQueueItems.insert({ renderId, { renderItem, AddRenderItemToView(renderId, renderItem) } });
-
     return renderId;
 }
 
@@ -583,6 +580,13 @@ MappedListViewID WAAPITransfer::AddRenderItemToView(RenderItemID renderId, const
 
 RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(RenderItemMap::iterator it)
 {
+    //remove from wwise parent in wwise object view
+    const std::string& wwiseParentGuid = it->second.first.wwiseGuid;
+    if (wwiseParentGuid != "")
+    {
+        GetWwiseObjectByGUID(wwiseParentGuid).renderChildren.erase(it->first);
+    }
+
     const HWND listView = GetRenderViewHWND();
     int indexToRemove = ListView_MapIDToIndex(listView, it->second.second);
     //remove from listview 
@@ -627,7 +631,7 @@ void WAAPITransfer::WaapiImportLoop()
     bool allImportsSucceeded = true;
     std::vector<std::string> backupsToRestore;
 
-    auto renderQueueProjectsCopy = renderQueueCachedProjects;
+    RenderProjectMap renderQueueProjectsCopy = renderQueueCachedProjects;
 
     while (renderQueueActive && !m_closeTransferThreadByUser)
     {
@@ -686,7 +690,7 @@ void WAAPITransfer::WaapiImportLoop()
         }
     }
 
-    for (const auto &file : backupsToRestore)
+    for (const std::string &file : backupsToRestore)
     {
         fs::rename(file + RENDER_QUEUE_BACKUP_APPEND, file);
     }
@@ -815,15 +819,14 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
 
 void WAAPITransfer::SetSelectedImportOperation(WAAPIImportOperation operation)
 {
-    auto func = [this, operation](uint32 mappedIndex, uint32 listItem) -> void
+    ForEachSelectedRenderItem([this, operation](uint32 mappedIndex, uint32 listItem)
     {
         GetRenderItemFromListviewId(mappedIndex).importOperation = operation;
         const std::string importStr = GetImportOperationString(operation);
         char operationStrbuff[64];
         strcpy(operationStrbuff, importStr.c_str());
         ListView_SetItemText(GetRenderViewHWND(), listItem, WAAPITransfer::RenderViewSubitemID::WaapiImportOperation, operationStrbuff);
-    };
-    ForEachSelectedRenderItem(func);
+    });
 }
 
 void WAAPITransfer::ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> func) const
@@ -879,7 +882,7 @@ void WAAPITransfer::SetRenderItemWwiseParent(MappedListViewID mappedIndex, const
         if (item.importObjectType == ImportObjectType::Music)
         {
             item.importObjectType = ImportObjectType::SFX;
-            const auto sfxStr = GetTextForImportObject(ImportObjectType::SFX);
+            const std::string sfxStr = GetTextForImportObject(ImportObjectType::SFX);
             char sfxStrBuffer[256];
             strcpy(sfxStrBuffer, sfxStr.c_str());
             ListView_SetItemText(GetRenderViewHWND(), listItem, RenderViewSubitemID::WwiseImportObjectType, sfxStrBuffer);
@@ -897,7 +900,7 @@ void WAAPITransfer::RemoveRenderItemWwiseParent(RenderItemID renderId)
 
 void WAAPITransfer::RemoveRenderItemWwiseParent(RenderItemMap::iterator it)
 {
-    auto &renderItem = it->second.first;
+    RenderItem &renderItem = it->second.first;
     renderItem.wwiseGuid = "";
 
     char *noParentStr = "Not set.";
@@ -920,7 +923,6 @@ void WAAPITransfer::SetRenderItemOutputName(MappedListViewID mappedIndex, const 
     int listItem = ListView_MapIDToIndex(GetRenderViewHWND(), mappedIndex);
     ListView_SetItemText(GetRenderViewHWND(), listItem, 1, strbuff);
 }
-
 
 
 //Persistent statics

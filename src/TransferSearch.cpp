@@ -6,6 +6,61 @@
 #include "TransferSearch.h"
 #include "WAAPITransfer.h"
 
+
+TransferSearch::TransferSearch(WAAPITransfer *transferObject, HWND parent, const int regionListViewId, const int RegionTracksToRenderListViewId)
+    : m_waapiTransfer(transferObject)
+    , m_hwnd(parent)
+    , m_regionListViewId(regionListViewId)
+    , m_regionTracksToRenderListViewId(RegionTracksToRenderListViewId)
+{
+    HWND regionView = GetRegionListViewHWND();
+    {
+        LVCOLUMN column{};
+        column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+        column.fmt = LVCFMT_LEFT;
+        column.cx = 125;
+        column.iSubItem = RegionListViewSubItemID::Name;
+        column.pszText = "Name";
+        ListView_InsertColumn(regionView, RegionListViewSubItemID::Name, &column);
+    }
+
+    {
+        LVCOLUMN column{};
+        column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+        column.fmt = LVCFMT_LEFT;
+        column.cx = 125;
+        column.iSubItem = RegionListViewSubItemID::NumRenderItems;
+        column.pszText = "Render Items";
+        ListView_InsertColumn(regionView, RegionListViewSubItemID::NumRenderItems, &column);
+    }
+
+    ListView_SetExtendedListViewStyle(regionView, LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
+
+    //region render items view
+    HWND regionTracksToRenderView = GetRegionTracksToRenderHWND();
+    {
+        LVCOLUMN column{};
+        column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+        column.fmt = LVCFMT_LEFT;
+        column.cx = 125;
+        column.iSubItem = RegionTracksToRenderListViewSubItemID::AudioFileName;
+        column.pszText = "Audio File";
+        ListView_InsertColumn(regionView, RegionTracksToRenderListViewSubItemID::AudioFileName, &column);
+    }
+
+    {
+        LVCOLUMN column{};
+        column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+        column.fmt = LVCFMT_LEFT;
+        column.cx = 125;
+        column.iSubItem = RegionTracksToRenderListViewSubItemID::RenderSource;
+        column.pszText = "Render Source";
+        ListView_InsertColumn(regionView, RegionTracksToRenderListViewSubItemID::RenderSource, &column);
+    }
+
+    RefreshState();
+}
+
 void TransferSearch::RefreshState()
 {
     RefreshReaperState();
@@ -15,45 +70,31 @@ void TransferSearch::RefreshState()
 void TransferSearch::RefreshReaperState()
 {
     m_trackGuidToRenderItems.clear();
-    m_trackNameToGuid.clear();
     int numTracks = CountTracks(0);
 
     m_trackGuidToRenderItems.reserve(numTracks);
-    m_trackNameToGuid.reserve(numTracks);
 
     //enumerate reaper tracks
-    int trackIdx = 0;
-    for (auto track = GetTrack(nullptr, trackIdx);
-         track; 
+    for (int trackIdx = 0;
+         trackIdx < numTracks; 
          ++trackIdx)
     {
+        MediaTrack *track = GetTrack(nullptr, trackIdx);
         char name[256];
         GetSetMediaTrackInfo_String(track, "P_NAME", name, false);
 
         //name -> tolower for searching, can cause collisions with two names capitalized differently but thats an odd use case
         //and user can still select track and match GUID anyway.
-        std::transform(std::begin(name), std::end(name), std::begin(name), [](char c) {return std::tolower(c); });
+        std::transform(std::begin(name), std::end(name), std::begin(name), [](char c) { return std::tolower(c); });
 
         char guidStr[64];
         guidToString(GetTrackGUID(track), guidStr);
         m_trackGuidToRenderItems.insert({ guidStr, {} });
-
-        auto sameNameFoundIt = m_trackNameToGuid.find(guidStr);
-        if (sameNameFoundIt != m_trackNameToGuid.end())
-        {
-            sameNameFoundIt->second.push_back(guidStr);
-        }
-        else
-        {
-            m_trackNameToGuid.insert({ name, { guidStr } });
-        }
     }
 
-    m_regionNameToId.clear();
     m_regionIdToRenderItems.clear();
     int numRegions;
     CountProjectMarkers(0, nullptr, &numRegions);
-    m_regionNameToId.reserve(numRegions);
     m_regionIdToRenderItems.reserve(numRegions);
 
     //enumerate regions
@@ -62,31 +103,37 @@ void TransferSearch::RefreshReaperState()
     const char *regionName;
     int regionIndex;
 
-    for (int markerIdx = 0,
-         resultIndex = EnumProjectMarkers(markerIdx, &isRegion, &start, &end, &regionName, &regionIndex);
-         resultIndex != -1;
-         ++markerIdx)
+    for (int markerIdx = 0; /* */; ++markerIdx)
     {
+        if (!EnumProjectMarkers(markerIdx, &isRegion, &start, &end, &regionName, &regionIndex))
+        {
+            break;
+        }
+
         if (!isRegion)
         {
             continue;
         }
+
+        char regionNameStrBuffer[512];
+        strcpy(regionNameStrBuffer, regionName);
+
+        LVITEM listViewItem{};
+        listViewItem.mask = LVIF_TEXT | LVIF_PARAM;
+        listViewItem.iItem = static_cast<int>(m_regionIdToMappedListView.size());
+        listViewItem.iSubItem = 0;
+        listViewItem.pszText = regionNameStrBuffer;
+        listViewItem.lParam = regionIndex;
+
+        const int listViewId = ListView_InsertItem(GetRegionListViewHWND(), &listViewItem);
+        const uint32 mappedListViewID = ListView_MapIndexToID(GetRegionListViewHWND(), listViewId);
+        m_regionIdToMappedListView.insert({ regionIndex, mappedListViewID });
 
         m_regionIdToRenderItems.insert({ regionIndex, {} });
         
         //reaper gives us an immutable string
         std::string regionStr(regionName);
         std::transform(regionStr.begin(), regionStr.end(), regionStr.begin(), [](char c) { return std::tolower(c); });
-        auto sameNameFoundIt = m_regionNameToId.find(regionName);
-
-        if (sameNameFoundIt != m_regionNameToId.end())
-        {
-            sameNameFoundIt->second.push_back(regionIndex);
-        }
-        else
-        {
-            m_regionNameToId.insert({ std::move(regionStr), { regionIndex } });
-        }
     }
 }
 
@@ -98,8 +145,8 @@ void TransferSearch::RefreshRenderItemIndexing()
          it != itEnd;
          ++it)
     {
-        const auto &renderItem = it->second.first;
-        const auto &renderItemId = it->first;
+        const RenderItem &renderItem = it->second.first;
+        const RenderItemID &renderItemId = it->first;
 
         //check render track, add if guid's match
         auto trackGuidFoundIt = m_trackGuidToRenderItems.find(renderItem.trackStemGuid);

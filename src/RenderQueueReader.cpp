@@ -225,7 +225,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
     if (projectRenderSourceFlags & RenderSourceRegionMatrix)
     {
         //render matrix
-        for (const auto &region : regions)
+        for (const ReaperRegion &region : regions)
         {
             //per region render master flag
             int matrixOffsetCounter = 0;
@@ -241,7 +241,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
             }
             if (region.regionRenderFlags & RenderItemFlags::RenderMatrixSourceAllTracks)
             {
-                for (const auto &track : tracks)
+                for (const ReaperTrack &track : tracks)
                 {
                     renderItems[renderItemCount].regionRenderFlags = RenderItemFlags::RenderSourceSelectedStems
                                                                    | RenderItemFlags::RenderBoundsRegion;
@@ -254,7 +254,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
             }
             else
             {
-                for (const auto &matrixTrack : region.regionRenderTracks)
+                for (const std::string &matrixTrack : region.regionRenderTracks)
                 {
                     //add matrix tracks
                     renderItems[renderItemCount].regionRenderFlags = RenderItemFlags::RenderSourceRegionMatrix
@@ -284,7 +284,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
                 if (++renderItemCount >= renderItems.size()) return;
             }
 
-            for (const auto &track : tracks)
+            for (const ReaperTrack &track : tracks)
             {
                 //add track
                 renderItems[renderItemCount].trackStemGuid = track.guid;
@@ -295,7 +295,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
         } break;
         case ReaperRenderRangeMode::ProjectRegions:
         {
-            for (const auto &region : regions)
+            for (const ReaperRegion &region : regions)
             {
                 if (projectRenderSourceFlags & RenderSourceMaster)
                 {
@@ -308,7 +308,7 @@ void AddRenderInfo(const std::vector<ReaperTrack> &tracks,
                     if (++renderItemCount >= renderItems.size()) return;
                 }
 
-                for (const auto &track : tracks)
+                for (const ReaperTrack &track : tracks)
                 {
                     //add track
                     renderItems[renderItemCount].trackStemGuid = std::move(track.guid);
@@ -459,7 +459,7 @@ std::vector<RenderItem> ParseRenderQueue(const fs::path &path)
 }
 
 
-
+#if 0
 //simple parser just for render item path before we implement searching
 std::vector<RenderItem> ParseRenderQueueFile(const fs::path &path)
 {
@@ -504,7 +504,7 @@ std::vector<RenderItem> ParseRenderQueueFile(const fs::path &path)
 
     return items;
 }
-
+#endif
 
 std::vector<fs::path> GetRenderQueueProjectFiles()
 {

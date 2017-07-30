@@ -111,7 +111,7 @@ bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
             auto attrib = waapiEnabledNode->last_attribute("Value");
             if (attrib)
             {
-                auto val = attrib->value();
+                char *val = attrib->value();
                 waapiEnabled = strcmp(val, "True") == 0 ? 1 : 0;
             }
             else

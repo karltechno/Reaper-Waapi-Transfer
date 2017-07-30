@@ -10,6 +10,7 @@
 #include "Reaper_WAAPI_Transfer.h"
 #include "RenderQueueReader.h"
 #include "WAAPIHelpers.h"
+#include "SearchWindowHandler.h"
 #include "config.h"
 
 #include "types.h"
@@ -115,6 +116,11 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
             transfer->Connect();
         } break;
 
+        case IDC_BATCH_SELECT:
+        { 
+            OpenTransferSearchWindow(hwndDlg, transfer);
+        } break;
+
         case IDC_ADD_SELECTED_WWISE:
         {
             transfer->AddSelectedWwiseObjects();
@@ -201,6 +207,18 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
     case WM_NOTIFY:
     {
+        switch (wParam)
+        {
+        case LVN_COLUMNCLICK:
+        {
+            int x = 5;
+        } break;
+
+        default:
+        {
+        } break;
+
+        }
     } break;
 
     //message from transfer thread 
@@ -591,6 +609,26 @@ int CALLBACK WindowCompareFunc(LPARAM item1, LPARAM item2, LPARAM columnId)
 
     } break;
 
+    case WAAPITransfer::RenderViewSubitemID::WwiseImportObjectType:
+    {
+
+    } break;
+
+    case WAAPITransfer::RenderViewSubitemID::WwiseLanguage:
+    {
+
+    } break;
+
+    case WAAPITransfer::RenderViewSubitemID::WaapiImportOperation:
+    {
+
+    } break;
+
+    default:
+    {
+        assert(!"Unidentified column id.");
+        return 0;
+    }
     }
     return 0;
 }

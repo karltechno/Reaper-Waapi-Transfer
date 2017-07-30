@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <unordered_map>
+#include <Windows.h>
 
 #include "types.h"
 
@@ -8,25 +9,47 @@ class WAAPITransfer;
 
 class TransferSearch
 {
-    explicit TransferSearch(WAAPITransfer *transferObject)
-        : m_waapiTransfer(transferObject)
-    {}
+public:
+    TransferSearch(WAAPITransfer *transferObject, HWND parent, const int RegionListViewId, const int RegionTracksToRenderListViewId);
+    ~TransferSearch() = default;
+
+    TransferSearch(const TransferSearch&) = delete;
+    TransferSearch operator=(const TransferSearch&) = delete;
 
     void RefreshState();
 
+    HWND GetRegionListViewHWND() { return GetDlgItem(m_hwnd, m_regionListViewId); }
+    HWND GetRegionTracksToRenderHWND() { return GetDlgItem(m_hwnd, m_regionTracksToRenderListViewId); }
+
+    enum RegionListViewSubItemID
+    {
+        Name,
+        NumRenderItems
+    };
+
+    enum RegionTracksToRenderListViewSubItemID
+    {
+        AudioFileName,
+        RenderSource
+    };
+
 private:
+    HWND m_hwnd;
+    int m_regionListViewId;
+    int m_regionTracksToRenderListViewId;
+
     void RefreshReaperState();
     void RefreshRenderItemIndexing();
+
 
     WAAPITransfer *const m_waapiTransfer;
 
     //Maps reaper track GUID to render items using it
     std::unordered_map<std::string, std::vector<RenderItemID>> m_trackGuidToRenderItems;
-    //Maps reaper track name to GUID, NOTE: multiple tracks can have the same name, so we store a vector of GUIDs
-    std::unordered_map<std::string, std::vector<std::string>> m_trackNameToGuid;
 
     //Maps reaper region id to render ids using it
     std::unordered_map<int32, std::vector<RenderItemID>> m_regionIdToRenderItems;
-    //Maps reaper region name to id (like track, possible to have multiple with same name..)
-    std::unordered_map<std::string, std::vector<int32>> m_regionNameToId;
+    std::unordered_map<int32, MappedListViewID> m_regionIdToMappedListView;
+
+    
 };

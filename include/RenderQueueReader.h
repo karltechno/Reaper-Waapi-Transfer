@@ -30,7 +30,6 @@ enum RenderItemFlags
 
 fs::path GetRenderQueueDir();
 
-std::vector<RenderItem> ParseRenderQueueFile(const fs::path &path);
 
 std::vector<RenderItem> ParseRenderQueue(const fs::path &path);
 

@@ -90,7 +90,7 @@ INT_PTR WINAPI RecallWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
                 } break;
                 case WAAPIRecall::SubitemID::ReaProjectName:
                 {
-                    auto projectPath = recallPtr->GetRecallItem(mappedId).projectPath;
+                    const std::string &projectPath = recallPtr->GetRecallItem(mappedId).projectPath;
                     const std::string filename = fs::path(projectPath).filename().generic_string();
                     strcpy(plvdi->item.pszText, filename.c_str());
 

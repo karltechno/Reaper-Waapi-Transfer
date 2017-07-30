@@ -40,6 +40,13 @@ public:
         Path = 1,
     };
 
+    enum class MultiSelectMode
+    {
+        NewSelection,
+        FilterSelection,
+        AddToSelection
+    };
+
     //connect to wwise client and update status text
     bool Connect();
 
@@ -110,6 +117,9 @@ public:
 
     //Retrieves a wwise object by guid (from the internal active wwise objects view) 
     WwiseObject &GetWwiseObjectByGUID(const std::string &guid);
+
+    template<typename RenderIdIter>
+    void WAAPITransfer::MultiSelect(RenderIdIter begin, RenderIdIter end, MultiSelectMode selectMode);
 
     //last import operation selected - thanks Tom!
     static WAAPIImportOperation lastImportOperation;
@@ -186,3 +196,27 @@ private:
     //Map render queue list item (with mapped index) to the render item id
     std::unordered_map<MappedListViewID, RenderItemID> m_renderListViewMap;
 };
+
+
+template<typename RenderIdIter>
+inline void WAAPITransfer::MultiSelect(RenderIdIter begin, RenderIdIter end, MultiSelectMode selectMode)
+{
+        switch (selectMode)
+        {
+            case MultiSelectMode::NewSelection:
+            {
+                
+            } break;
+            case MultiSelectMode::FilterSelection:
+            {
+
+            } break;
+            case MultiSelectMode::AddToSelection:
+            {
+
+            } break;
+            default:
+            {
+            } break;
+        }
+}
