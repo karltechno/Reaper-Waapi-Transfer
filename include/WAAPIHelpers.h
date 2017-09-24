@@ -62,10 +62,10 @@ class WwiseImageList
 public:
     static void LoadIcons(std::initializer_list<std::pair<std::string, int>> icons);
     static int GetIconForWwiseType(const std::string wwiseType);
-    static HIMAGELIST GetImageList() { return imageList; }
+    static HIMAGELIST GetImageList() { return s_imageList; }
 private:
-    static std::unordered_map<std::string, int> iconList;
-    static HIMAGELIST imageList;
+    static std::unordered_map<std::string, int> s_iconList;
+    static HIMAGELIST s_imageList;
 };
 
 

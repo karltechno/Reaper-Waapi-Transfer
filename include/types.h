@@ -62,6 +62,7 @@ struct RenderItem
 
     std::string wwiseGuid;
     std::string wwiseParentName;
+	std::string wwiseOriginalsSubpath;
 
     WAAPIImportOperation importOperation;
     ImportObjectType importObjectType;

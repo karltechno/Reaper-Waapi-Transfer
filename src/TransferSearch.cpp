@@ -140,8 +140,8 @@ void TransferSearch::RefreshReaperState()
 void TransferSearch::RefreshRenderItemIndexing()
 {
     //iterate render items
-    for (auto it = m_waapiTransfer->renderQueueItems.begin(),
-         itEnd = m_waapiTransfer->renderQueueItems.end();
+    for (auto it = m_waapiTransfer->s_renderQueueItems.begin(),
+         itEnd = m_waapiTransfer->s_renderQueueItems.end();
          it != itEnd;
          ++it)
     {

@@ -71,6 +71,16 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
         SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)transfer);
         g_transferWindow = hwndDlg;
 
+		HWND button = GetDlgItem(hwndDlg, IDC_COPY_FILES_TO_ORIGINALS);
+		if (transfer->ShouldCopyToOriginals())
+		{
+			Button_SetCheck(button, BST_CHECKED);
+		}
+		else
+		{
+			Button_SetCheck(button, BST_UNCHECKED);
+		}
+
         transfer->SetupAndRecreateWindow();
 
         transfer->UpdateRenderQueue();
@@ -158,6 +168,20 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
         {
             OpenImportSettingsWindow(hwndDlg, reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA)));
         } break;
+
+		case IDC_COPY_FILES_TO_ORIGINALS:
+		{
+			LRESULT checked = Button_GetCheck(GetDlgItem(hwndDlg, IDC_COPY_FILES_TO_ORIGINALS));
+			if (checked == BST_CHECKED)
+			{
+				transfer->SetShouldCopyToOriginals(true);
+			}
+			else if (checked == BST_UNCHECKED)
+			{
+				transfer->SetShouldCopyToOriginals(false);
+			}
+
+		} break;
 
         default:
         {
@@ -462,6 +486,15 @@ INT_PTR WINAPI ImportSettingsWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
         //WAAPITransfer pointer
         SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
+		WAAPITransfer *transferPtr = reinterpret_cast<WAAPITransfer*>(lParam);
+		HWND comboBox = GetDlgItem(hwndDlg, IDC_ORIGINALS_TEXT);
+
+		//add previous history strings
+		for (std::string const& originalPath : transferPtr->s_originalPathHistory)
+		{
+			ComboBox_AddString(comboBox, const_cast<LPSTR>(originalPath.c_str()));
+		}
+
         //add languages
         HWND comboBoxHWND = GetDlgItem(hwndDlg, IDC_LANGUAGE_DROPDOWN);
         for (uint32 i = 0; i < std::size(WwiseLanguages); ++i)
@@ -511,6 +544,42 @@ INT_PTR WINAPI ImportSettingsWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
         WAAPITransfer *transferPtr = reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
         switch (wParam)
         {
+		case IDC_SET_ORIGINAL_BTN:
+		{
+			char strBuff[512];
+			ComboBox_GetText(GetDlgItem(hwndDlg, IDC_ORIGINALS_TEXT), strBuff, 512);
+
+			//Add to history if not there
+			std::string pathStr(strBuff);
+
+			//Wwise will complain and the plugin will recreate the reaper projects and exported sounds if the user provides an invalid path
+			//but we can atleast check for partial correctness
+			//https://msdn.microsoft.com/en-us/library/aa365247
+			size_t errorCharPos = pathStr.find_first_of("\"<>:|?*");
+			if (errorCharPos != std::string::npos)
+			{
+				char msgBoxError[256];
+				sprintf_s(msgBoxError, "You entered an incorrect character in the originals path: %c", pathStr[errorCharPos]);
+
+				MessageBox(hwndDlg, msgBoxError, "Waapi Error", MB_OK | MB_ICONERROR);
+			}
+			else
+			{
+				if (transferPtr->s_originalPathHistory.find(pathStr) == transferPtr->s_originalPathHistory.end())
+				{
+					transferPtr->s_originalPathHistory.insert(pathStr);
+					ComboBox_AddString(GetDlgItem(hwndDlg, IDC_ORIGINALS_TEXT), strBuff);
+				}
+
+				transferPtr->ForEachSelectedRenderItem([transferPtr, &pathStr, strBuff](MappedListViewID mappedIdx, uint32 listViewIdx)
+				{
+					RenderItem &item = transferPtr->GetRenderItemFromListviewId(mappedIdx);
+					item.wwiseOriginalsSubpath = pathStr;
+					ListView_SetItemText(transferPtr->GetRenderViewHWND(), listViewIdx, WAAPITransfer::RenderViewSubitemID::WwiseOriginalsSubPath, (LPSTR)strBuff);
+				});
+			}
+
+		} break;
 
         case IDC_IMPORT_SFX_BUTTON:
         {

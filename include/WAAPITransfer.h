@@ -31,7 +31,8 @@ public:
         WwiseParent = 1,
         WwiseImportObjectType = 2,
         WwiseLanguage = 3,
-        WaapiImportOperation = 4
+        WaapiImportOperation = 4,
+		WwiseOriginalsSubPath = 5
     };
 
     enum WwiseViewSubItemID
@@ -118,6 +119,9 @@ public:
     //Retrieves a wwise object by guid (from the internal active wwise objects view) 
     WwiseObject &GetWwiseObjectByGUID(const std::string &guid);
 
+	bool ShouldCopyToOriginals() const { return s_copyFilesToWwiseOriginals; }
+	void SetShouldCopyToOriginals(const bool shouldCopy) { s_copyFilesToWwiseOriginals = shouldCopy; }
+
     template<typename RenderIdIter>
     void WAAPITransfer::MultiSelect(RenderIdIter begin, RenderIdIter end, MultiSelectMode selectMode);
 
@@ -126,6 +130,9 @@ public:
 
     //object owns this hwnd
     HWND hwnd;
+
+	//recently entered wwise original subpaths
+	static std::unordered_set<std::string> s_originalPathHistory;
 
 private:
     //Window id's
@@ -144,15 +151,17 @@ private:
     //Render queue items, key is audio file path
     //Value is the renderitem and then the mapped index in the listview 
     //(mapped index is used so we don't have to do a full search in m_renderListViewMap when deleting render items)
-    static RenderItemMap renderQueueItems;
-    static uint32 RenderItemIdCounter;
+    static RenderItemMap s_renderQueueItems;
+    static uint32 s_RenderItemIdCounter;
 
     //Stores the render queue project paths with a vector of renderitemid's
-    static RenderProjectMap renderQueueCachedProjects;
+    static RenderProjectMap s_renderQueueCachedProjects;
 
     //working wwise objects stored in reaper project and between window invocation
     //wwise object GUID as key
-    static WwiseObjectMap activeWwiseObjects;
+    static WwiseObjectMap s_activeWwiseObjects;
+
+	static bool s_copyFilesToWwiseOriginals;
 
     //----------------------------------------------------------------
 

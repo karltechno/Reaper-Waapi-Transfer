@@ -50,13 +50,13 @@ void WAAPITransfer::RecreateWwiseView()
         column.fmt = LVCFMT_LEFT;
         column.cx = 275;
         column.iSubItem = WwiseViewSubItemID::Path;
-        column.pszText = "Path";
+        column.pszText = "Originals Subpath";
         ListView_InsertColumn(wwiseView, WwiseViewSubItemID::Path, &column);
     }
     ListView_SetExtendedListViewStyle(wwiseView, LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
     ListView_SetImageList(wwiseView, WwiseImageList::GetImageList(), LVSIL_SMALL);
 
-    for (const auto &item : activeWwiseObjects)
+    for (const auto &item : s_activeWwiseObjects)
     { 
         AddWwiseObjectToView(item.first, item.second);
     }
@@ -81,7 +81,7 @@ void WAAPITransfer::RecreateTransferListView()
         LVCOLUMN column{};
         column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
         column.fmt = LVCFMT_LEFT;
-        column.cx = 125;
+        column.cx = 100;
         column.iSubItem = RenderViewSubitemID::WwiseParent;
         column.pszText = "Wwise Parent";
         ListView_InsertColumn(renderView, RenderViewSubitemID::WwiseParent, &column);
@@ -108,15 +108,24 @@ void WAAPITransfer::RecreateTransferListView()
         LVCOLUMN column{};
         column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
         column.fmt = LVCFMT_LEFT;
-        column.cx = 125;
+        column.cx = 100;
         column.iSubItem = RenderViewSubitemID::WaapiImportOperation;
         column.pszText = "Import Operation";
         ListView_InsertColumn(renderView, RenderViewSubitemID::WaapiImportOperation, &column);
     }
+	{
+		LVCOLUMN column{};
+		column.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+		column.fmt = LVCFMT_LEFT;
+		column.cx = 100;
+		column.iSubItem = RenderViewSubitemID::WwiseOriginalsSubPath;
+		column.pszText = "Originals Subpath";
+		ListView_InsertColumn(renderView, RenderViewSubitemID::WwiseOriginalsSubPath, &column);
+	}
 
     ListView_SetExtendedListViewStyle(renderView, LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
 
-    for (auto &renderItemPair : renderQueueItems)
+    for (auto &renderItemPair : s_renderQueueItems)
     {
         //update mapped id cached in the render item
         renderItemPair.second.second = AddRenderItemToView(renderItemPair.first, renderItemPair.second.first);
@@ -208,7 +217,7 @@ void WAAPITransfer::UpdateRenderQueue()
 
     std::vector<RenderProjectMap::iterator> toDelete;
 
-    for (auto iter = renderQueueCachedProjects.begin(), iterEnd = renderQueueCachedProjects.end();
+    for (auto iter = s_renderQueueCachedProjects.begin(), iterEnd = s_renderQueueCachedProjects.end();
          iter != iterEnd;
          ++iter)
     {
@@ -221,7 +230,7 @@ void WAAPITransfer::UpdateRenderQueue()
 
     for (auto iter : toDelete)
     {
-        renderQueueCachedProjects.erase(iter);
+        s_renderQueueCachedProjects.erase(iter);
     }
 
     //add render items that need to be added
@@ -229,9 +238,9 @@ void WAAPITransfer::UpdateRenderQueue()
                   projectFilesToAdd.end(),
                   [this](const fs::path &path) 
                   {
-                   auto iter = renderQueueCachedProjects.find(path.generic_string());
+                   auto iter = s_renderQueueCachedProjects.find(path.generic_string());
 
-                   if (iter == renderQueueCachedProjects.end())
+                   if (iter == s_renderQueueCachedProjects.end())
                    {
                        AddRenderItemsByProject(path);
                    }
@@ -241,8 +250,8 @@ void WAAPITransfer::UpdateRenderQueue()
 RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItemId)
 {
     //maybe we should change to nested maps, oh well
-    auto iter = renderQueueItems.find(renderItemId);
-    assert(iter != renderQueueItems.end());
+    auto iter = s_renderQueueItems.find(renderItemId);
+    assert(iter != s_renderQueueItems.end());
     return iter->second.first;
 }
 
@@ -255,8 +264,8 @@ RenderItem &WAAPITransfer::GetRenderItemFromListviewId(MappedListViewID mappedLi
 
 WwiseObject &WAAPITransfer::GetWwiseObjectByGUID(const std::string &guid)
 {
-    auto foundIt = activeWwiseObjects.find(guid);
-    assert(foundIt != activeWwiseObjects.end());
+    auto foundIt = s_activeWwiseObjects.find(guid);
+    assert(foundIt != s_activeWwiseObjects.end());
     return foundIt->second;
 }
 
@@ -295,7 +304,7 @@ bool WAAPITransfer::Connect()
 void WAAPITransfer::RunRenderQueueAndImport()
 {
     //empty, no work to do
-    if (renderQueueItems.empty())
+    if (s_renderQueueItems.empty())
     {
         SetStatusText("Nothing to render.");
         return;
@@ -309,14 +318,14 @@ void WAAPITransfer::RunRenderQueueAndImport()
     }
     
     //find out how many items haven't been targeted to wwise
-    uint32_t numEmptyRenders = std::count_if(renderQueueItems.begin(), renderQueueItems.end(),
+    uint32_t numEmptyRenders = std::count_if(s_renderQueueItems.begin(), s_renderQueueItems.end(),
                                              [](const auto &item)
                                              { return item.second.first.wwiseGuid.empty(); });
     
     if (numEmptyRenders)
     {
         //nothing selected, just return
-        if (numEmptyRenders == renderQueueItems.size())
+        if (numEmptyRenders == s_renderQueueItems.size())
         {
             SetStatusText("No Wwise parents selected.");
             return;
@@ -384,8 +393,8 @@ void WAAPITransfer::AddSelectedWwiseObjects()
         const std::string wwiseObjectGuid = result["id"].GetVariant().GetString();
 
         //check if we already have this item
-        auto cachedGuid = activeWwiseObjects.find(wwiseObjectGuid);
-        if (cachedGuid != activeWwiseObjects.end())
+        auto cachedGuid = s_activeWwiseObjects.find(wwiseObjectGuid);
+        if (cachedGuid != s_activeWwiseObjects.end())
         {
             continue;
         }
@@ -430,7 +439,7 @@ void WAAPITransfer::RemoveWwiseObject(MappedListViewID toRemove)
             RemoveRenderItemWwiseParent(id);
         }
 
-        activeWwiseObjects.erase(treeIter->second);
+        s_activeWwiseObjects.erase(treeIter->second);
         m_wwiseListViewMap.erase(treeIter);
         HWND wwiseView = GetWwiseObjectListHWND();
         ListView_DeleteItem(wwiseView, ListView_MapIDToIndex(wwiseView, toRemove));
@@ -439,15 +448,15 @@ void WAAPITransfer::RemoveWwiseObject(MappedListViewID toRemove)
 
 void WAAPITransfer::RemoveAllWwiseObjects()
 {
-    for (auto it = renderQueueItems.begin(), 
-         endIt = renderQueueItems.end();
+    for (auto it = s_renderQueueItems.begin(), 
+         endIt = s_renderQueueItems.end();
          it != endIt;
          ++it)
     {
         RemoveRenderItemWwiseParent(it);
     }
     ListView_DeleteAllItems(GetWwiseObjectListHWND());
-    activeWwiseObjects.clear();
+    s_activeWwiseObjects.clear();
     m_wwiseListViewMap.clear();
 }
 
@@ -460,7 +469,7 @@ void WAAPITransfer::SetupAndRecreateWindow()
 
 MappedListViewID WAAPITransfer::CreateWwiseObject(const std::string &guid, const WwiseObject &wwiseInfo)
 {
-    activeWwiseObjects.insert({ guid, wwiseInfo });
+    s_activeWwiseObjects.insert({ guid, wwiseInfo });
     
     return AddWwiseObjectToView(guid, wwiseInfo);
 }
@@ -497,8 +506,8 @@ MappedListViewID WAAPITransfer::AddWwiseObjectToView(const std::string &guid, co
 
 void WAAPITransfer::RemoveRenderItemsByProject(const fs::path &projectPath)
 {
-    auto iter = renderQueueCachedProjects.find(projectPath.generic_string());
-    assert(iter != renderQueueCachedProjects.end());
+    auto iter = s_renderQueueCachedProjects.find(projectPath.generic_string());
+    assert(iter != s_renderQueueCachedProjects.end());
     RemoveRenderItemsByProject(iter);
 }
 
@@ -525,13 +534,13 @@ void WAAPITransfer::AddRenderItemsByProject(const fs::path &path)
         //add lvitem
         renderIds.push_back(CreateRenderItem(renderItem));
     }
-    renderQueueCachedProjects.insert({ path.generic_string(), renderIds });
+    s_renderQueueCachedProjects.insert({ path.generic_string(), renderIds });
 }
 
 RenderItemID WAAPITransfer::CreateRenderItem(const RenderItem &renderItem)
 {
-    const RenderItemID renderId = RenderItemIdCounter++;
-    renderQueueItems.insert({ renderId, { renderItem, AddRenderItemToView(renderId, renderItem) } });
+    const RenderItemID renderId = s_RenderItemIdCounter++;
+    s_renderQueueItems.insert({ renderId, { renderItem, AddRenderItemToView(renderId, renderItem) } });
     return renderId;
 }
 
@@ -594,13 +603,13 @@ RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(RenderItemMap::i
     //remove from listview id map
     m_renderListViewMap.erase(it->second.second);
     //remove from render queue items
-    return renderQueueItems.erase(it);
+    return s_renderQueueItems.erase(it);
 }
 
 RenderItemMap::iterator WAAPITransfer::RemoveRenderItemFromList(uint32 renderItemId)
 {
-    auto iter = renderQueueItems.find(renderItemId);
-    assert(iter != renderQueueItems.end());
+    auto iter = s_renderQueueItems.find(renderItemId);
+    assert(iter != s_renderQueueItems.end());
     return RemoveRenderItemFromList(iter);
 }
 
@@ -609,7 +618,7 @@ void WAAPITransfer::WaapiImportLoop()
 {
     using namespace AK::WwiseAuthoringAPI;
 
-    for (const auto &renderQueueItemPath : renderQueueCachedProjects)
+    for (const auto &renderQueueItemPath : s_renderQueueCachedProjects)
     {
         //make a copy of the project file if we fail
         fs::path copy = renderQueueItemPath.first + RENDER_QUEUE_BACKUP_APPEND;
@@ -625,13 +634,13 @@ void WAAPITransfer::WaapiImportLoop()
     PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, 
                 TRANSFER_THREAD_WPARAM::LAUNCH_RENDER_QUEUE_REQUEST, 0);
 
-    std::size_t totalRenderItems = renderQueueCachedProjects.size();
+    std::size_t totalRenderItems = s_renderQueueCachedProjects.size();
     uint32 numItemsProcessed = 0;
     bool renderQueueActive = true;
     bool allImportsSucceeded = true;
     std::vector<std::string> backupsToRestore;
 
-    RenderProjectMap renderQueueProjectsCopy = renderQueueCachedProjects;
+    RenderProjectMap renderQueueProjectsCopy = s_renderQueueCachedProjects;
 
     while (renderQueueActive && !m_closeTransferThreadByUser)
     {
@@ -661,7 +670,15 @@ void WAAPITransfer::WaapiImportLoop()
                     //success, delete backup
                     fs::remove(iter->first + RENDER_QUEUE_BACKUP_APPEND);
 
-                    //RemoveRenderItemsByProject(iter);
+					//if we aren't copying then we should delete files in the reaper export folder
+					if (!ShouldCopyToOriginals())
+					{
+						for (RenderItemID id : iter->second)
+						{
+							fs::remove(GetRenderItemFromRenderItemId(id).audioFilePath);
+						}
+					}
+
                     iter = renderQueueProjectsCopy.erase(iter);
                 }
                 else
@@ -709,8 +726,8 @@ void WAAPITransfer::WaapiImportLoop()
 
 bool WAAPITransfer::WaapiImportByProject(const std::string &projectPath, const std::string &RecallProjectPath)
 {
-    auto iter = renderQueueCachedProjects.find(projectPath);
-    assert(iter != renderQueueCachedProjects.end());
+    auto iter = s_renderQueueCachedProjects.find(projectPath);
+    assert(iter != s_renderQueueCachedProjects.end());
     return WaapiImportByProject(iter, RecallProjectPath);
 }
 
@@ -781,6 +798,12 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
 
             }
 
+			if (!renderItem.wwiseOriginalsSubpath.empty())
+			{
+				//TODO: Check for path correctness
+				importMap.insert({ "originalsSubFolder", AkVariant(renderItem.wwiseOriginalsSubpath) });
+			}
+
             switch (renderItem.importOperation)
             {
             case WAAPIImportOperation::createNew:
@@ -797,6 +820,7 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
             {
                 itemsUseExisting.push_back(importItem);
             } break;
+
 
             }
         }
@@ -893,8 +917,8 @@ void WAAPITransfer::SetRenderItemWwiseParent(MappedListViewID mappedIndex, const
 
 void WAAPITransfer::RemoveRenderItemWwiseParent(RenderItemID renderId)
 {
-    auto foundIt = renderQueueItems.find(renderId);
-    assert(foundIt != renderQueueItems.end());
+    auto foundIt = s_renderQueueItems.find(renderId);
+    assert(foundIt != s_renderQueueItems.end());
     RemoveRenderItemWwiseParent(foundIt);
 }
 
@@ -926,11 +950,15 @@ void WAAPITransfer::SetRenderItemOutputName(MappedListViewID mappedIndex, const 
 
 
 //Persistent statics
-RenderItemMap WAAPITransfer::renderQueueItems = RenderItemMap{};
-RenderProjectMap WAAPITransfer::renderQueueCachedProjects = RenderProjectMap{};
+RenderItemMap WAAPITransfer::s_renderQueueItems = RenderItemMap{};
+RenderProjectMap WAAPITransfer::s_renderQueueCachedProjects = RenderProjectMap{};
 
-WwiseObjectMap WAAPITransfer::activeWwiseObjects = WwiseObjectMap{};
+WwiseObjectMap WAAPITransfer::s_activeWwiseObjects = WwiseObjectMap{};
 
-uint32 WAAPITransfer::RenderItemIdCounter = 0;
+uint32 WAAPITransfer::s_RenderItemIdCounter = 0;
 
 WAAPIImportOperation WAAPITransfer::lastImportOperation = WAAPIImportOperation::createNew;
+
+std::unordered_set<std::string> WAAPITransfer::s_originalPathHistory = std::unordered_set<std::string>{};
+
+bool WAAPITransfer::s_copyFilesToWwiseOriginals = true;

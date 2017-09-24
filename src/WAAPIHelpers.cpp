@@ -1,27 +1,27 @@
 #include "WAAPIHelpers.h"
 #include "Reaper_WAAPI_Transfer.h"
 
-std::unordered_map<std::string, int> WwiseImageList::iconList = std::unordered_map<std::string, int>{};
-HIMAGELIST WwiseImageList::imageList = HIMAGELIST{};
+std::unordered_map<std::string, int> WwiseImageList::s_iconList = std::unordered_map<std::string, int>{};
+HIMAGELIST WwiseImageList::s_imageList = HIMAGELIST{};
 
 void WwiseImageList::LoadIcons(std::initializer_list<std::pair<std::string, int>> icons)
 {
-    if (imageList)
+    if (s_imageList)
     {
-        ImageList_Destroy(imageList);
+        ImageList_Destroy(s_imageList);
     }
 
-    imageList = ImageList_Create(15, 15, ILC_COLOR32, static_cast<int>(icons.size()), 0);
+    s_imageList = ImageList_Create(15, 15, ILC_COLOR32, static_cast<int>(icons.size()), 0);
 
     for (const auto &icon : icons)
     {
         HANDLE imgHandle = LoadImage(g_hInst, MAKEINTRESOURCE(icon.second), IMAGE_ICON, 0, 0, 0);
         if (imgHandle)
         {
-            int imageId = ImageList_AddIcon(imageList, (HICON)imgHandle);
+            int imageId = ImageList_AddIcon(s_imageList, (HICON)imgHandle);
             if (imageId != -1)
             {
-                iconList.insert({ icon.first, imageId });
+                s_iconList.insert({ icon.first, imageId });
             }
         }
     }
@@ -29,8 +29,8 @@ void WwiseImageList::LoadIcons(std::initializer_list<std::pair<std::string, int>
 
 int WwiseImageList::GetIconForWwiseType(const std::string wwiseType)
 {
-    auto foundIcon = iconList.find(wwiseType);
-    if (foundIcon != iconList.end())
+    auto foundIcon = s_iconList.find(wwiseType);
+    if (foundIcon != s_iconList.end())
     {
         return foundIcon->second;
     }
