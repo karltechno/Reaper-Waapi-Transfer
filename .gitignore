@@ -1,6 +1,9 @@
+build/*
+build32/*
+x64/*
+Win32/*
 build/
 resources/icons/*
 !resources/icons/.gitempty
-include/AkAutobahn/*
-!include/AkAutobahn/.gitempty
+
 *.aps
