@@ -124,9 +124,9 @@ bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
             waapiEnabled = -1;
         }
     }
-    catch (const std::runtime_error &e)
+    catch (rapidxml::parse_error const& _e)
     {
-        ignore(e);
+		ignore(_e);
         return false;
     }
 
