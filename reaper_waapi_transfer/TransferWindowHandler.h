@@ -1,10 +1,13 @@
 #pragma once
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <cstdint>
+#include <stdint.h>
 
 #define WM_TRANSFER_THREAD_MSG (WM_USER + 1)
 #define WM_PROGRESS_WINDOW_MSG (WM_USER + 2)
+#define WM_TRANSFER_SELECT_ALL (WM_USER + 3)
 
+LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam);
 
 enum TRANSFER_THREAD_WPARAM : WPARAM
 {

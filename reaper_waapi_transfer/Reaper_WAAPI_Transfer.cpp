@@ -25,6 +25,7 @@
 //define globals
 HWND g_parentWindow;
 HINSTANCE g_hInst;
+HHOOK g_winHook = 0;
 
 int g_Waapi_Port;
 
@@ -52,6 +53,7 @@ extern "C"
         //return if plugin is exiting
         if (!rec)
         {
+			UnhookWindowsHookEx(g_winHook);
             return 0;
         }
         //set globals
@@ -81,6 +83,8 @@ extern "C"
         GET_FUNC_AND_CHKERROR(CountTracks);
         GET_FUNC_AND_CHKERROR(CountProjectMarkers);
         GET_FUNC_AND_CHKERROR(ShowConsoleMsg);
+
+		g_winHook = SetWindowsHookExA(WH_KEYBOARD_LL, TransferWindow_ReaperKeyboardHook, g_hInst, 0);
 
         //exit if any func pointer couldn't be found
         if (funcerrcnt)

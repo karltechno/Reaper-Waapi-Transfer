@@ -57,7 +57,6 @@ const uint32 IDT_REFRESH_VIEW_TIMER = 1002;
 
 #define START_REFRESH_TIMER(hwnd) SetTimer(hwnd, IDT_REFRESH_VIEW_TIMER, 1500, static_cast<TIMERPROC>(nullptr))
 #define STOP_REFRESH_TIMER(hwnd) KillTimer(hwnd, IDT_REFRESH_VIEW_TIMER)
-#define TRANSFER_HOTKEY_SELECT_ALL (1)
 
 static uint32 const s_contextMenuCreateNewId = 0xFE000000;
 static uint32 const s_contextMenuReplaceExisting = 0xFE000000 | 0x1;
@@ -65,6 +64,30 @@ static uint32 const s_contextMenuUseExistingId = 0xFE000000 | 0x2;
 static uint32 const s_contextMenuImportAsSFX = 0xFE000000 | 0x3;
 static uint32 const s_contextMenuImportAsDialog = 0xFE000000 | 0x4;
 
+
+LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam)
+{
+	KBDLLHOOKSTRUCT *kb = (KBDLLHOOKSTRUCT *)lParam;
+	
+	if (!g_transferWindow)
+	{
+		return CallNextHookEx(0, code, wParam, lParam);
+	}
+
+	if (code == HC_ACTION && wParam == WM_KEYDOWN)
+	{
+		// win32 programming AT ITS BEST!
+		if (IsChild(g_transferWindow, GetFocus()))
+		{
+			if (kb->vkCode == 0x41 && GetKeyState(VK_LCONTROL) & 0x8000) // 'A'
+			{
+				PostMessage(g_transferWindow, WM_TRANSFER_SELECT_ALL, 0, 0);
+			}
+		}
+	}
+
+	return CallNextHookEx(0, code, wParam, lParam);
+}
 
 INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -75,12 +98,8 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 		} break;
 
-
 		case WM_INITDIALOG:
 		{
-			//register hotkey crtl+a for selecting all render items
-			RegisterHotKey(hwndDlg, TRANSFER_HOTKEY_SELECT_ALL, MOD_CONTROL | MOD_NOREPEAT, 0x41);
-
 			WAAPITransfer *transfer = new WAAPITransfer(hwndDlg, IDC_WWISEOBJECT_LIST, IDC_STATUS, IDC_TRANSFER_LIST);
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)transfer);
 			g_transferWindow = hwndDlg;
@@ -104,31 +123,6 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			ShowWindow(hwndDlg, SW_SHOW);
 		} break;
 
-		case WM_HOTKEY:
-		{
-			WAAPITransfer *transfer = reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
-			switch (wParam)
-			{
-
-				case TRANSFER_HOTKEY_SELECT_ALL:
-				{
-					//select all listview items
-					HWND listView = transfer->GetRenderViewHWND();
-					LRESULT listItem = SendMessage(listView, LVM_GETNEXTITEM, -1, LVNI_ALL);
-					while (listItem != -1)
-					{
-						ListView_SetItemState(listView, listItem, LVIS_SELECTED, LVIS_SELECTED);
-						listItem = SendMessage(listView, LVM_GETNEXTITEM, listItem, LVNI_ALL);
-					};
-
-				} break;
-				default:
-				{
-				} break;
-
-			}
-
-		} break;
 
 		case WM_COMMAND:
 		{
@@ -269,6 +263,20 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			}
 		} break;
 
+		case WM_TRANSFER_SELECT_ALL:
+		{
+			WAAPITransfer* transfer = reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+			//select all listview items
+			HWND const listView = transfer->GetRenderViewHWND();
+			LRESULT listItem = ListView_GetNextItem(listView, -1, LVNI_ALL);
+			while (listItem != -1)
+			{
+				ListView_SetItemState(listView, listItem, LVIS_SELECTED, LVIS_SELECTED);
+				listItem = ListView_GetNextItem(listView, listItem, LVNI_ALL);
+			};
+			return true;
+		} break;
+
 		case WM_CONTEXTMENU:
 		{
 			WAAPITransfer *transfer = reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
@@ -366,9 +374,6 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 
 		case WM_DESTROY:
 		{
-			//deregister hotkey crtl+a
-			UnregisterHotKey(hwndDlg, TRANSFER_HOTKEY_SELECT_ALL);
-
 			delete reinterpret_cast<WAAPITransfer*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
 
 			g_transferWindow = 0;
