@@ -1,1 +1,0 @@
-11/02/18 - Specify an optional override timeout on AK::WwiseAuthoringAPI::Client::Call to block indefinetly on some calls (to fix error when using source control and not accepting the wwise add to source control fast enough)
