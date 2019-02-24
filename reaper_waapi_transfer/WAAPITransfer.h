@@ -97,7 +97,7 @@ public:
     void SetSelectedImportOperation(WAAPIImportOperation operation);
 
     //for each selected list view item apply function accepting a mapped list view id and listview index
-    void ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> func) const;
+    void ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> const& func) const;
 
     //Updates the Wwise parent that the render item will be imported into
     //if wwise parent is a music segment then the render items will have their import object type changed to match
@@ -138,9 +138,9 @@ private:
     int m_transferWindowId;
 
     //The progress window will set and reset this value when it opens and closes
-    std::atomic<HWND> m_progressWindow;
+	std::atomic<HWND> m_progressWindow{};
 
-    std::atomic_bool m_closeTransferThreadByUser;
+	std::atomic_bool m_closeTransferThreadByUser{};
 
     //----------------------------------------------------------------
     //Static persistent 

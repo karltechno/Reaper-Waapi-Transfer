@@ -15,8 +15,8 @@
 
 #include "types.h"
 
-HWND g_transferWindow = 0;
-HWND g_importSettingsWindow = 0;
+static HWND g_transferWindow = 0;
+static HWND g_importSettingsWindow = 0;
 
 //forward declerations
 INT_PTR WINAPI ImportSettingsWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -31,13 +31,7 @@ INT_PTR WINAPI AboutWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case WM_INITDIALOG:
 		{
 			char strbuff[256];
-			std::string str("WAAPI Transfer Version: "
-							+ std::to_string(WT_VERSION_MAJOR) + '.'
-							+ std::to_string(WT_VERSION_MINOR) + '.'
-							+ std::to_string(WT_VERSION_INCREMENTAL));
-
-			strcpy(strbuff, str.c_str());
-
+			snprintf(strbuff, sizeof(strbuff), "WAAPI Transfer Version: %u.%u.%u", WT_VERSION_MAJOR, WT_VERSION_MINOR, WT_VERSION_INCREMENTAL);
 			SetWindowText(GetDlgItem(hwndDlg, IDC_VERSION), strbuff);
 			ShowWindow(hwndDlg, SW_SHOW);
 		} break;
@@ -67,7 +61,7 @@ static uint32 const s_contextMenuImportAsDialog = 0xFE000000 | 0x4;
 
 LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam)
 {
-	KBDLLHOOKSTRUCT *kb = (KBDLLHOOKSTRUCT *)lParam;
+	KBDLLHOOKSTRUCT const* kb = (KBDLLHOOKSTRUCT *)lParam;
 	
 	if (!g_transferWindow)
 	{
@@ -82,6 +76,10 @@ LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam
 			if (kb->vkCode == 0x41 && GetKeyState(VK_LCONTROL) & 0x8000) // 'A'
 			{
 				PostMessage(g_transferWindow, WM_TRANSFER_SELECT_ALL, 0, 0);
+			}
+			else if (kb->vkCode == VK_ESCAPE)
+			{
+				PostMessage(g_transferWindow, WM_CLOSE, 0, 0);
 			}
 		}
 	}

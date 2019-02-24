@@ -165,7 +165,7 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
     {
         auto &renderItem = GetRenderItemFromListviewId(mappedIndex);
         bool isParentMusicSegment = false;
-        if (renderItem.wwiseGuid != "")
+        if (!renderItem.wwiseGuid.empty())
         {
             isParentMusicSegment = GetWwiseObjectByGUID(renderItem.wwiseGuid).isMusicSegment;
         }
@@ -739,7 +739,7 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
     //wwise seems to crash importing a lot of items at once, so let's split it up into 10's for now
     const std::vector<uint32> &renderIdVec = projectIter->second;
 
-    //we need seperate arrays for each import operation
+    //we need separate arrays for each import operation
     AkJson::Array itemsCreateNew;
     AkJson::Array itemsUseExisting;
     AkJson::Array itemsReplaceExisting;
@@ -749,7 +749,7 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
     itemsReplaceExisting.reserve(WAAPI_IMPORT_BATCH_SIZE);
 
     bool allSucceeded = true;
-    uint32 numBatches = static_cast<uint32>(std::ceilf(renderIdVec.size() / static_cast<float>(WAAPI_IMPORT_BATCH_SIZE)));
+    uint32 const numBatches = static_cast<uint32>(std::ceilf(renderIdVec.size() / static_cast<float>(WAAPI_IMPORT_BATCH_SIZE)));
 
     for (uint32 batch = 0; batch < numBatches; ++batch)
     {
@@ -757,14 +757,14 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
         itemsUseExisting.clear();
         itemsReplaceExisting.clear();
 
-        uint32 numItems = std::min(static_cast<uint32>(renderIdVec.size()) - batch * WAAPI_IMPORT_BATCH_SIZE, WAAPI_IMPORT_BATCH_SIZE);
+        uint32 const numItems = std::min(static_cast<uint32>(renderIdVec.size()) - batch * WAAPI_IMPORT_BATCH_SIZE, WAAPI_IMPORT_BATCH_SIZE);
 
         for (uint32 i = 0; i < numItems; ++i)
         {
             const RenderItem &renderItem = GetRenderItemFromRenderItemId(renderIdVec[i + (batch * WAAPI_IMPORT_BATCH_SIZE)]);
             
             //check if object has wwise GUID attached
-            if (renderItem.wwiseGuid == "")
+            if (renderItem.wwiseGuid.empty())
             {
                 continue;
             }
@@ -853,7 +853,7 @@ void WAAPITransfer::SetSelectedImportOperation(WAAPIImportOperation operation)
     });
 }
 
-void WAAPITransfer::ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> func) const
+void WAAPITransfer::ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> const& func) const
 {
     HWND listView = GetRenderViewHWND();
     LRESULT listItem = SendMessage(listView, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
@@ -873,7 +873,7 @@ void WAAPITransfer::SetRenderItemWwiseParent(MappedListViewID mappedIndex, const
     RenderItem &item = GetRenderItemFromRenderItemId(renderIndexPair->second);
 
     //remove previous render id from wwise object internal map
-    if (item.wwiseGuid != "")
+    if (!item.wwiseGuid.empty())
     {
         GetWwiseObjectByGUID(item.wwiseGuid).renderChildren.erase(renderIndexPair->second);
     }
