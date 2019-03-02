@@ -1,6 +1,9 @@
+#include <AK/Tools/Common/AkAssert.h>
+
 #include "WAAPIHelpers.h"
 #include "Reaper_WAAPI_Transfer.h"
 
+#if AK_ENABLE_ASSERTS
 void ReaperWAAPITransferAssertHook
 (
 	const char * in_pszExpression,
@@ -14,6 +17,7 @@ void ReaperWAAPITransferAssertHook
 }
 
 AkAssertHook g_pAssertHook = ReaperWAAPITransferAssertHook;
+#endif
 
 std::unordered_map<std::string, int> WwiseImageList::s_iconList = std::unordered_map<std::string, int>{};
 HIMAGELIST WwiseImageList::s_imageList = HIMAGELIST{};
