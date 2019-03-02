@@ -12,7 +12,6 @@ WAAPIRecall::WAAPIRecall(HWND hwnd, int recallListId, int statusTextId)
     : hwnd(hwnd)
     , m_recallListId(recallListId)
     , m_statusTextId(statusTextId)
-    //, m_client(WAAPI_CLIENT_TIMEOUT_MS) TODO: Need to edit AkAutobahn again and add this back in?
 {}
 
 void WAAPIRecall::UpdateWwiseObjects()

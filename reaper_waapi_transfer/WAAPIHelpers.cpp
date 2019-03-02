@@ -163,5 +163,5 @@ bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
     });
     AkJson result;
 
-    return client.Call(ak::wwise::core::audio::import, createArgs, AkJson(AkJson::Map()), result, 0);
+    return client.Call(ak::wwise::core::audio::import, createArgs, AkJson(AkJson::Map()), result, -1);
 }

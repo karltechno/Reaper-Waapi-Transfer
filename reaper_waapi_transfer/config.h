@@ -10,7 +10,6 @@ constexpr uint32 WWISE_NAME_MAX_LEN = 260;
 const std::string PROJ_NOTE_PREFIX = "REAPROJ:";
 const std::string RENDER_QUEUE_BACKUP_APPEND = ".wpbak";
 
-constexpr int WAAPI_CLIENT_TIMEOUT_MS = 2000;
 
 constexpr uint32 WAAPI_IMPORT_BATCH_SIZE = 10;
 constexpr int WAAPI_DEFAULT_PORT = 8080;
