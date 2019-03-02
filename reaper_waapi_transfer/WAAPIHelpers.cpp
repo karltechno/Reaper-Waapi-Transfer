@@ -13,7 +13,7 @@ void ReaperWAAPITransferAssertHook
 {
 	char buff[1024];
 	snprintf(buff, sizeof(buff), "AKASSERT: %s, %s - %d", in_pszExpression, in_pszFileName, in_lineNumber);
-	assert(buff);
+	assert(0 && buff);
 }
 
 AkAssertHook g_pAssertHook = ReaperWAAPITransferAssertHook;
