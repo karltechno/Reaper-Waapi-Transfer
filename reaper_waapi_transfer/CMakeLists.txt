@@ -80,6 +80,10 @@ if(MSVC)
     set_target_properties(reaper_waapi_transfer PROPERTIES VS_DEBUGGER_COMMAND "${REAPER_ARCH_PATH}/reaper.exe")
   endif()
 
+# PDB in release.
+  add_definitions(/Zi)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /DEBUG")
+
 endif()
 
 if(NOT ${REAPER_ARCH_PATH} STREQUAL "")
