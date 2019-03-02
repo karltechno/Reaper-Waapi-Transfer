@@ -14,7 +14,8 @@ const std::string RENDER_QUEUE_BACKUP_APPEND = ".wpbak";
 constexpr uint32 WAAPI_IMPORT_BATCH_SIZE = 10;
 constexpr int WAAPI_DEFAULT_PORT = 8080;
 
-#define WT_VERSION 0x000109
+// TODO: CMake ?
+#define WT_VERSION 0x00010A
 
 #define WT_VERSION_MAJOR ((WT_VERSION & 0xFF0000) >> 16)
 #define WT_VERSION_MINOR ((WT_VERSION & 0x00FF00) >> 8)
