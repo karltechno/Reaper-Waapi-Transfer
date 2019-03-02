@@ -59,7 +59,7 @@ static uint32 const s_contextMenuImportAsSFX = 0xFE000000 | 0x3;
 static uint32 const s_contextMenuImportAsDialog = 0xFE000000 | 0x4;
 
 
-LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam)
 {
 	KBDLLHOOKSTRUCT const* kb = (KBDLLHOOKSTRUCT *)lParam;
 	

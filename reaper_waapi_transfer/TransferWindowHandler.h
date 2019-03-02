@@ -7,7 +7,7 @@
 #define WM_PROGRESS_WINDOW_MSG (WM_USER + 2)
 #define WM_TRANSFER_SELECT_ALL (WM_USER + 3)
 
-LRESULT TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK TransferWindow_ReaperKeyboardHook(int code, WPARAM wParam, LPARAM lParam);
 
 enum TRANSFER_THREAD_WPARAM : WPARAM
 {
