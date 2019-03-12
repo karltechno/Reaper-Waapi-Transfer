@@ -3,7 +3,7 @@
 #include "WAAPIHelpers.h"
 #include "Reaper_WAAPI_Transfer.h"
 
-#if AK_ENABLE_ASSERTS
+#ifdef AK_ENABLE_ASSERTS
 void ReaperWAAPITransferAssertHook
 (
 	const char * in_pszExpression,
