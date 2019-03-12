@@ -50,10 +50,10 @@ bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
 
 
 //Check if type is usable for importing render items into
-inline bool IsParentType(const std::string &wwiseType)
-{
-    return WwiseParentTypes.find(wwiseType) != WwiseParentTypes.end();
-}
+bool IsParentContainer(const std::string &wwiseType);
+
+// Returns if the given wwise container is a music container.
+bool IsMusicContainer(const std::string &wwiseType);
 
 
 //Holds win32 image list and map of wwise types to their image ID in the list

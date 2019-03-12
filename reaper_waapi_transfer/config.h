@@ -63,15 +63,3 @@ static const char *WwiseLanguages[] =
     "Vietnamese"
 };
 
-
-static const std::unordered_set<std::string> WwiseParentTypes
-{
-    "Folder",
-    "WorkUnit",
-    "RandomSequenceContainer",
-    "BlendContainer",
-    "ActorMixer",
-    "SwitchContainer",
-    "MusicSegment"
-};
-

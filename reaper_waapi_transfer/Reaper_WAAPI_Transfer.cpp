@@ -139,8 +139,10 @@ extern "C"
             { "RandomSequenceContainer", IDI_RANDOMCONTAINER },
             { "SequenceContainer", IDI_SEQUENCECONTAINER },
             { "SwitchContainer", IDI_SWITCHCONTAINER },
-            { "Folder", IDI_FOLDER},
-            { "MusicSegment", IDI_MUSICSEGMENT}
+            { "Folder", IDI_FOLDER },
+            { "MusicSegment", IDI_MUSICSEGMENT },
+			{ "MusicSwitchContainer", IDI_MUSICSWITCH },
+			{ "MusicPlaylistContainer", IDI_MUSICPLAYLIST }
         });
 
         //lookup wwise Waapi info

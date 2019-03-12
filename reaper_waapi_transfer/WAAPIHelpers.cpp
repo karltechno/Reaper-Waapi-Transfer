@@ -22,6 +22,37 @@ AkAssertHook g_pAssertHook = ReaperWAAPITransferAssertHook;
 std::unordered_map<std::string, int> WwiseImageList::s_iconList = std::unordered_map<std::string, int>{};
 HIMAGELIST WwiseImageList::s_imageList = HIMAGELIST{};
 
+
+static const std::unordered_set<std::string> s_wwiseParentTypes
+{
+	"Folder",
+	"WorkUnit",
+	"RandomSequenceContainer",
+	"BlendContainer",
+	"ActorMixer",
+	"SwitchContainer",
+	"MusicSegment",
+	"MusicSwitchContainer",
+	"MusicPlaylistContainer"
+};
+
+static const std::unordered_set<std::string> s_musicTypes =
+{
+	"MusicSegment",
+	"MusicSwitchContainer",
+	"MusicPlaylistContainer"
+};
+
+bool IsParentContainer(const std::string &wwiseType)
+{
+	return s_wwiseParentTypes.find(wwiseType) != s_wwiseParentTypes.end();
+}
+
+bool IsMusicContainer(const std::string &wwiseType)
+{
+	return s_musicTypes.find(wwiseType) != s_musicTypes.end();
+}
+
 void WwiseImageList::LoadIcons(std::initializer_list<std::pair<std::string, int>> icons)
 {
     if (s_imageList)

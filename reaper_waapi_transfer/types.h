@@ -53,7 +53,7 @@ struct WwiseObject
 
     //Currently 'type' is just used for the icon decoration, only music segment changes
     //functionality as it dictates what object type a render child of a wwise object can be
-    bool isMusicSegment;
+    bool isMusicContainer;
 };
 
 enum class ImportObjectType

@@ -144,7 +144,7 @@ void WAAPITransfer::SetSelectedRenderParents(MappedListViewID wwiseId)
 
     const auto &wwiseGuid = wwiseIter->second;
 
-    bool isMusicSegment = GetWwiseObjectByGUID(wwiseGuid).isMusicSegment;
+    bool isMusicSegment = GetWwiseObjectByGUID(wwiseGuid).isMusicContainer;
     
     ForEachSelectedRenderItem([this, &wwiseGuid, isMusicSegment]
     (uint32 mappedIndex, uint32 index)
@@ -167,7 +167,7 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
         bool isParentMusicSegment = false;
         if (!renderItem.wwiseGuid.empty())
         {
-            isParentMusicSegment = GetWwiseObjectByGUID(renderItem.wwiseGuid).isMusicSegment;
+            isParentMusicSegment = GetWwiseObjectByGUID(renderItem.wwiseGuid).isMusicContainer;
         }
 
         //check if we are allowed to set this
@@ -401,7 +401,7 @@ void WAAPITransfer::AddSelectedWwiseObjects()
 
         //check if type is valid for importing audio
         const std::string wwiseObjectType = result["type"].GetVariant().GetString();
-        if (!IsParentType(wwiseObjectType))
+        if (!IsParentContainer(wwiseObjectType))
         {
             continue;
         }
@@ -410,7 +410,7 @@ void WAAPITransfer::AddSelectedWwiseObjects()
         wwiseNode.type = wwiseObjectType;
         wwiseNode.path = result["path"].GetVariant().GetString();
         wwiseNode.name = result["name"].GetVariant().GetString();
-        wwiseNode.isMusicSegment = wwiseObjectType == "MusicSegment";
+        wwiseNode.isMusicContainer = IsMusicContainer(wwiseObjectType);
 
         CreateWwiseObject(wwiseObjectGuid, wwiseNode);
         ++numItemsAdded;
