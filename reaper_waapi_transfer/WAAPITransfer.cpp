@@ -24,7 +24,6 @@ WAAPITransfer::WAAPITransfer(HWND window, int treeId, int statusTextid, int tran
     , m_statusTextId(statusTextid)
     , m_transferWindowId(transferWindowId)
     , m_progressWindow(0)
-    // , m_client(WAAPI_CLIENT_TIMEOUT_MS) TODO: Need to edit AkAutobahn and add this back in?
 {
     Connect();
 }
@@ -772,9 +771,9 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
             AkJson importItem = AkJson(AkJson::Map{
                 { "audioFile", AkVariant(renderItem.audioFilePath.generic_string()) },
                 { "importLocation", AkVariant(renderItem.wwiseGuid) },
-                { "objectType", AkVariant("Sound") },
-                { "audioSourceNotes", AkVariant(RecallProjectPath) }
+                { "objectType", AkVariant("Sound") }
             });
+
             auto &importMap = importItem.GetMap();
 
             switch (renderItem.importObjectType)
@@ -783,12 +782,14 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
             case ImportObjectType::SFX:
             {
                 importMap.insert({ "objectPath", AkVariant("<Sound SFX>" + renderItem.outputFileName) });
+				importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
             } break;
 
             case ImportObjectType::Voice:
             {
                 importMap.insert({ "importLanguage", AkVariant(WwiseLanguages[renderItem.wwiseLanguageIndex]) });
                 importMap.insert({ "objectPath", AkVariant("<Sound Voice>" + renderItem.outputFileName) });
+				importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
             } break;
 
             case ImportObjectType::Music:
