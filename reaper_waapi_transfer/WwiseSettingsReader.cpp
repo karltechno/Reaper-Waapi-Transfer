@@ -10,9 +10,13 @@
 #include "config.h"
 #include "WAAPIHelpers.h"
 
-bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
+bool GetWaapiSettings(WaapiSetting &waapiEnabled, int &waapiPort)
 {
     fs::path wwiseSettingsPath;
+
+	// Note: with new versions of Wwise WAAPI is enabled by default - so we won't error anymore.
+	waapiEnabled = WaapiSetting::Unknown;
+	waapiPort = -1;
 
 #ifdef _WIN32
     PWSTR appDataPath;
@@ -96,14 +100,6 @@ bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
             {
                 waapiPort = std::stoi(attrib->value());
             }
-            else
-            {
-                waapiPort = -1;
-            }
-        }
-        else
-        {
-            waapiPort = -1;
         }
 
         if (waapiEnabledNode)
@@ -112,16 +108,9 @@ bool GetWaapiSettings(int &waapiEnabled, int &waapiPort)
             if (attrib)
             {
                 char *val = attrib->value();
-                waapiEnabled = strcmp(val, "True") == 0 ? 1 : 0;
+                waapiEnabled = strcmp(val, "True") == 0 ? WaapiSetting::Enabled : WaapiSetting::Disabled;
             }
-            else
-            {
-                waapiEnabled = -1;
-            }
-        }
-        else
-        {
-            waapiEnabled = -1;
+
         }
     }
     catch (...)

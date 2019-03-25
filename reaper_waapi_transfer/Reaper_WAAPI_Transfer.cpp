@@ -146,15 +146,11 @@ extern "C"
         });
 
         //lookup wwise Waapi info
-        int waapiEnabled, waapiPort;
+        int waapiPort;
+		WaapiSetting waapiEnabled;
         if (GetWaapiSettings(waapiEnabled, waapiPort))
         {
-            if (waapiEnabled == -1)
-            {
-                StartupError("Waapi is disabled in Wwise settings or you are using an unsupported version of Wwise.\n" 
-                             "Please enable Waapi or update Wwise to use Waapi Transfer.");
-            }
-            if (waapiEnabled == 0)
+            if (waapiEnabled == WaapiSetting::Disabled)
             {
                 StartupError("Waapi is disabled in Wwise settings, please enable it to use Waapi Transfer.");
             }
