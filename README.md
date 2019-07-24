@@ -1,6 +1,9 @@
+*_Please note, this is an old project which is not actively maintained. Forks/pull requests welcome._* 
+
 # Reaper-Waapi-Transfer
 
 Reaper extension for quickly importing rendered audio files into Wwise.
+
 
 ## [Download the extension here](https://github.com/karltechno/Reaper-Waapi-Transfer/releases)
 
