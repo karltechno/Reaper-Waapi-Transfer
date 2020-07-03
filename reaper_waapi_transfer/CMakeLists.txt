@@ -29,13 +29,6 @@ SET(REAPER_WAAPI_TRANSFER_SOURCES
   "WwiseSettingsReader.h"
 )
 
-SET(SOURCES_RAPIDXML
-  "rapidxml/rapidxml.hpp"
-  "rapidxml/rapidxml_iterators.hpp"
-  "rapidxml/rapidxml_print.hpp"
-  "rapidxml/rapidxml_utils.hpp"
-)
-
 SET(SOURCES_ICONS 
   "resources/icons/actor_mixer_icon.ico"
   "resources/icons/blend_container_icon.ico"
@@ -47,7 +40,7 @@ SET(SOURCES_ICONS
   "resources/icons/work_unit_icon.ico"
 )
 
-add_library(reaper_waapi_transfer SHARED ${REAPER_WAAPI_TRANSFER_SOURCES} ${SOURCES_ICONS} ${SOURCES_RAPIDXML})
+add_library(reaper_waapi_transfer SHARED ${REAPER_WAAPI_TRANSFER_SOURCES} ${SOURCES_ICONS})
 
 target_link_libraries(reaper_waapi_transfer AkAutobahn)
 

@@ -3,14 +3,19 @@ project (reaper_waapi_transfer)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(AKSDK_INCLUDE_DIR "$ENV{WWISESDK}/include" CACHE PATH "Path Wwise SDK includes")
+set(AKSDK_DIR "$ENV{WWISESDK}/include" CACHE PATH "Path Wwise SDK")
+set(AKSDK_INCLUDE_DIR "${AKSDK_DIR}/include")
+
+set(EXT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ext")
+
 
 # check for wwise sdk
 if(NOT EXISTS ${AKSDK_INCLUDE_DIR}/AK/WwiseAuthoringAPI)
   message(FATAL_ERROR "Can't find Wwise SDK with WAAPI in ${AKSDK_INCLUDE_DIR}")
 endif()
 
-include_directories(${AKSDK_INCLUDE_DIR} "AkAutobahn/")
+include_directories(${AKSDK_INCLUDE_DIR})
+include_directories("${EXT_DIR}/rapidjson" "${EXT_DIR}/rapidxml")
 
 add_definitions(-DUSE_WEBSOCKET -D_CRT_SECURE_NO_WARNINGS)
 
@@ -23,5 +28,5 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG")
 endif()
 
-add_subdirectory(AkAutobahn/AkAutobahn)
+add_subdirectory(ext/AkAutobahn)
 add_subdirectory(reaper_waapi_transfer)
