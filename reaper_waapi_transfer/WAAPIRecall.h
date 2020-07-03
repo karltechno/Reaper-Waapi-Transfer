@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <AkAutobahn/Client.h>
+#include <AK/WwiseAuthoringAPI/AkAutobahn/Client.h>
 
 #include "config.h"
 #include "types.h"

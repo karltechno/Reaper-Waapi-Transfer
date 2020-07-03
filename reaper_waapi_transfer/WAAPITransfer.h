@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <Commctrl.h>
-#include <AkAutobahn\Client.h>
+#include <AK/WwiseAuthoringAPI/AkAutobahn/Client.h>
 #include <atomic>
 
 #include <vector>

@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <initializer_list>
 
-#include <AK\WwiseAuthoringAPI\waapi.h>
-#include <AkAutobahn\Client.h>
+#include <AK/WwiseAuthoringAPI/waapi.h>
+#include <AK/WwiseAuthoringAPI/AkAutobahn/Client.h>
 
 #include "config.h"
 #include "types.h"
