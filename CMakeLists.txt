@@ -28,5 +28,14 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG")
 endif()
 
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+
 add_subdirectory(ext/AkAutobahn)
+add_subdirectory(ext/imgui)
+add_subdirectory(ext/glad)
+add_subdirectory(ext/glfw)
 add_subdirectory(reaper_waapi_transfer)

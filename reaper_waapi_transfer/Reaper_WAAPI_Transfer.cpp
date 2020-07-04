@@ -19,6 +19,8 @@
 #include "WAAPIHelpers.h"
 #include "WwiseSettingsReader.h"
 
+
+
 #define GET_FUNC_AND_CHKERROR(x) if (!((*((void **)&(x)) = (void *)rec->GetFunc(#x)))) ++funcerrcnt
 #define REGISTER_AND_CHKERROR(variable, name, info) if(!(variable = rec->Register(name, (void*)info))) ++regerrcnt
 
@@ -56,6 +58,7 @@ extern "C"
 			UnhookWindowsHookEx(g_winHook);
             return 0;
         }
+
         //set globals
         g_parentWindow = rec->hwnd_main;
         g_hInst = hInstance;

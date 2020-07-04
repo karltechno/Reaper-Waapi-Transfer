@@ -42,11 +42,8 @@ enum PROGRESS_WINDOW_WPARAM : WPARAM
 };
 
 
-HWND OpenTransferWindow();
+void OpenTransferWindow();
 
 class WAAPITransfer;
 void OpenProgressWindow(HWND parent, WAAPITransfer *parentTransfer);
 void OpenImportSettingsWindow(HWND parent, WAAPITransfer *parentTransfer);
-
-
-int CALLBACK WindowCompareFunc(LPARAM item1, LPARAM item2, LPARAM columnId);

@@ -12,11 +12,19 @@
 #include "WAAPIHelpers.h"
 #include "SearchWindowHandler.h"
 #include "config.h"
-
 #include "types.h"
+#include "ImGuiWindow.h"
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#include "examples/imgui_impl_opengl3.h"
 
 static HWND g_transferWindow = 0;
 static HWND g_importSettingsWindow = 0;
+
+static GLFWwindow* g_glfwWindow;
 
 //forward declerations
 INT_PTR WINAPI ImportSettingsWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -646,54 +654,48 @@ void OpenImportSettingsWindow(HWND parent, WAAPITransfer *parentTransfer)
 	}
 }
 
-HWND OpenTransferWindow()
+
+static void TransferThreadFn()
 {
-	if (g_transferWindow)
+	if (!ImGuiHandler::InitWindow("Reaper Waapi Transfer", 640, 480))
 	{
-		return SetActiveWindow(g_transferWindow);
+		// TODO: Error
+		return;
 	}
-	else
+
+	while (!glfwWindowShouldClose(ImGuiHandler::GetGLFWWindow()))
 	{
-		return CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_TRANSFER), g_parentWindow, TransferWindowProc);
+		ImGuiHandler::BeginFrame();
+
+		GLFWwindow* glfwWindow = ImGuiHandler::GetGLFWWindow();
+
+		unsigned const windowFlags = ImGuiWindowFlags_NoCollapse
+			| ImGuiWindowFlags_NoDecoration
+			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoResize;
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
+		
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+		ImGui::Begin("Hello", nullptr, windowFlags);
+		ImGui::Text("Helo Hello");
+		ImGui::Button("A button");
+		ImGui::End();
+		ImGui::PopStyleVar(2);
+
+		ImGuiHandler::EndFrame();
+		Sleep(33);
 	}
+
+	ImGuiHandler::ShutdownWindow();
 }
 
-//used for sorting list view
-int CALLBACK WindowCompareFunc(LPARAM item1, LPARAM item2, LPARAM columnId)
+void OpenTransferWindow()
 {
-	switch (columnId)
-	{
-
-		case WAAPITransfer::RenderViewSubitemID::AudioFileName:
-		{
-
-		} break;
-
-		case WAAPITransfer::RenderViewSubitemID::WwiseParent:
-		{
-
-		} break;
-
-		case WAAPITransfer::RenderViewSubitemID::WwiseImportObjectType:
-		{
-
-		} break;
-
-		case WAAPITransfer::RenderViewSubitemID::WwiseLanguage:
-		{
-
-		} break;
-
-		case WAAPITransfer::RenderViewSubitemID::WaapiImportOperation:
-		{
-
-		} break;
-
-		default:
-		{
-			assert(!"Unidentified column id.");
-			return 0;
-		}
-	}
-	return 0;
+	std::thread t(TransferThreadFn);
+	t.detach();
 }

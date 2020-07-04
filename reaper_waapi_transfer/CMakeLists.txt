@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.2)
 
 SET(REAPER_WAAPI_TRANSFER_SOURCES
   "config.h"
+  "ImGuiHandler.h"
+  "ImGuiHandler.cpp"
   "reaper_plugin.h"
   "reaper_plugin_functions.h"
   "Reaper_WAAPI_Transfer.cpp"
@@ -42,7 +44,7 @@ SET(SOURCES_ICONS
 
 add_library(reaper_waapi_transfer SHARED ${REAPER_WAAPI_TRANSFER_SOURCES} ${SOURCES_ICONS})
 
-target_link_libraries(reaper_waapi_transfer AkAutobahn)
+target_link_libraries(reaper_waapi_transfer AkAutobahn glad glfw imgui)
 
 if(WIN32)
   target_link_libraries(reaper_waapi_transfer Comctl32.lib)
