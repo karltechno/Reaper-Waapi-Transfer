@@ -85,7 +85,7 @@ public:
     void UpdateRenderQueue();
     
     //sets all the selected list view items wwise parents
-    void SetSelectedRenderParents(MappedListViewID wwiseTreeItem);
+    void SetSelectedRenderParents(std::string const& wwiseObjGuid);
 
     //import as SFX, Music or dialog voice
     void SetSelectedImportObjectType(ImportObjectType type);
@@ -97,11 +97,11 @@ public:
     void SetSelectedImportOperation(WAAPIImportOperation operation);
 
     //for each selected list view item apply function accepting a mapped list view id and listview index
-    void ForEachSelectedRenderItem(std::function<void(MappedListViewID, uint32)> const& func) const;
+    void ForEachSelectedRenderItem(std::function<void(RenderItem&)> const& func) const;
 
     //Updates the Wwise parent that the render item will be imported into
     //if wwise parent is a music segment then the render items will have their import object type changed to match
-    void SetRenderItemWwiseParent(MappedListViewID mappedIndex, const std::string &wwiseParentGuid, bool isMusicSegment = false);
+    void SetRenderItemWwiseParent(RenderItem& item, const std::string &wwiseParentGuid, bool isMusicSegment = false);
 
     //used to reset render item wwise parent if user removes a wwise object from the internal list
     void RemoveRenderItemWwiseParent(RenderItemID renderId);

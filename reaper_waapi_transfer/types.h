@@ -49,6 +49,7 @@ struct WwiseObject
     std::string name;
     std::string type;
     std::string path;
+	std::string guid;
     std::unordered_set<RenderItemID> renderChildren;
 
     //Currently 'type' is just used for the icon decoration, only music segment changes
@@ -74,6 +75,8 @@ enum class WAAPIImportOperation
 
 struct RenderItem
 {
+	RenderItemID renderItemId;
+
     fs::path projectPath;
     fs::path audioFilePath;
     std::string outputFileName;

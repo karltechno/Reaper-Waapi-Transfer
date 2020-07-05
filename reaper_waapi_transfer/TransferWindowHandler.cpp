@@ -21,6 +21,23 @@
 #include <GLFW/glfw3native.h>
 #include "examples/imgui_impl_opengl3.h"
 
+struct ImGuiTableHeader
+{
+	char const* const* colNames;
+	int sortColIdx = 0;
+	int numCols = 0;
+	ImGuiDir sortColDir = ImGuiDir_Down;
+};
+
+struct TransferWindowState
+{
+	ImGuiTextFilter wwiseObjectFilter;
+	ImGuiTableHeader renderQueueHeader;
+	ImGuiTableHeader wwiseObjectHeader;
+};
+
+static TransferWindowState g_transferWindowState;
+
 static HWND g_transferWindow = 0;
 static HWND g_importSettingsWindow = 0;
 
@@ -200,7 +217,7 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 					auto selected = ListView_GetNextItem(transfer->GetWwiseObjectListHWND(), -1, LVNI_SELECTED);
 					if (selected != -1)
 					{
-						transfer->SetSelectedRenderParents(ListView_MapIndexToID(transfer->GetWwiseObjectListHWND(), selected));
+						//transfer->SetSelectedRenderParents(ListView_MapIndexToID(transfer->GetWwiseObjectListHWND(), selected));
 					}
 				} break;
 
@@ -575,12 +592,12 @@ INT_PTR WINAPI ImportSettingsWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
 							ComboBox_AddString(GetDlgItem(hwndDlg, IDC_ORIGINALS_TEXT), strBuff);
 						}
 
-						transferPtr->ForEachSelectedRenderItem([transferPtr, &pathStr, strBuff](MappedListViewID mappedIdx, uint32 listViewIdx)
-						{
-							RenderItem &item = transferPtr->GetRenderItemFromListviewId(mappedIdx);
-							item.wwiseOriginalsSubpath = pathStr;
-							ListView_SetItemText(transferPtr->GetRenderViewHWND(), listViewIdx, WAAPITransfer::RenderViewSubitemID::WwiseOriginalsSubPath, (LPSTR)strBuff);
-						});
+						//transferPtr->ForEachSelectedRenderItem([transferPtr, &pathStr, strBuff](MappedListViewID mappedIdx, uint32 listViewIdx)
+						//{
+						//	RenderItem &item = transferPtr->GetRenderItemFromListviewId(mappedIdx);
+						//	item.wwiseOriginalsSubpath = pathStr;
+						//	ListView_SetItemText(transferPtr->GetRenderViewHWND(), listViewIdx, WAAPITransfer::RenderViewSubitemID::WwiseOriginalsSubPath, (LPSTR)strBuff);
+						//});
 					}
 
 				} break;
@@ -686,13 +703,6 @@ static void DoMenuBar(WAAPITransfer& transfer)
 	ImGui::EndMenuBar();
 }
 
-struct ImGuiTableHeader
-{
-	char const* const* colNames;
-	int sortColIdx = 0;
-	int numCols = 0; 
-	ImGuiDir sortColDir = ImGuiDir_Down;
-};
 
 void DoImGuiTableHeader(ImGuiTableHeader& hdr)
 {
@@ -714,44 +724,57 @@ void DoImGuiTableHeader(ImGuiTableHeader& hdr)
 	}
 }
 
-void DoWwiseObjectWindow(WAAPITransfer& transfer, ImGuiTableHeader& hdr)
+std::vector<WwiseObject*> GetSortedWwiseObjects(WAAPITransfer& transfer, ImGuiTableHeader& hdr, ImGuiTextFilter* filter = nullptr)
+{
+	std::vector<WwiseObject*> sortedObjects;
+	sortedObjects.reserve(transfer.s_activeWwiseObjects.size());
+
+	for (auto it = transfer.s_activeWwiseObjects.begin(); it != transfer.s_activeWwiseObjects.end(); ++it)
+	{
+		if (!filter || filter->PassFilter(it->second.name.c_str()))
+		{
+			sortedObjects.push_back(&it->second);
+		}
+	}
+
+	switch (hdr.sortColIdx)
+	{
+		case 0: // Name
+		{
+			std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->name < rhs->name; });
+		} break;
+
+		case 1: // Path
+		{
+			std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->path < rhs->path; });
+		} break;
+
+		case 2: // Type
+		{
+			std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->type < rhs->type; });
+		} break;
+	}
+
+	// TODO
+	if (hdr.sortColDir == ImGuiDir_Up)
+	{
+		std::reverse(sortedObjects.begin(), sortedObjects.end());
+	}
+
+	return sortedObjects;
+}
+
+void DoWwiseObjectWindow(WAAPITransfer& transfer)
 {
 	if (ImGui::BeginChild("WwiseObjects"))
 	{
+		ImGuiTableHeader& hdr = g_transferWindowState.wwiseObjectHeader;
+
 		assert(hdr.numCols == 3);
 		ImGui::Columns(3);
 		DoImGuiTableHeader(hdr);
 
-		std::vector<WwiseObject*> sortedObjects;
-		sortedObjects.reserve(transfer.s_activeWwiseObjects.size());
-
-		for (auto it = transfer.s_activeWwiseObjects.begin(); it != transfer.s_activeWwiseObjects.end(); ++it)
-		{
-			sortedObjects.push_back(&it->second);
-		}
-
-		switch (hdr.sortColIdx)
-		{
-			case 0: // Name
-			{
-				std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->name < rhs->name; });
-			} break;
-
-			case 1: // Path
-			{
-				std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->path < rhs->path; });
-			} break;
-			
-			case 2: // Type
-			{
-				std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->type < rhs->type; });
-			} break;
-		}
-
-		if (hdr.sortColDir == ImGuiDir_Up)
-		{
-			std::reverse(sortedObjects.begin(), sortedObjects.end());
-		}
+		std::vector<WwiseObject*> sortedObjects = GetSortedWwiseObjects(transfer, hdr, nullptr);
 
 		for (std::vector<WwiseObject*>::iterator it = sortedObjects.begin(); it != sortedObjects.end(); ++it)
 		{
@@ -769,17 +792,50 @@ void DoWwiseObjectWindow(WAAPITransfer& transfer, ImGuiTableHeader& hdr)
 
 	if (ImGui::Button("Add Selected Wwise Objects"))
 	{
-		CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
+		//CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
 		transfer.AddSelectedWwiseObjects();
 	}
 
 	ImGui::EndChild();
 }
 
-static void DoRenderQueueWindow(WAAPITransfer& transfer, ImGuiTableHeader& hdr)
+static void DoWwiseParentPopup(WAAPITransfer& transfer)
+{
+	ImGuiTableHeader& hdr = g_transferWindowState.wwiseObjectHeader;
+
+	assert(hdr.numCols == 3);
+	g_transferWindowState.wwiseObjectFilter.Draw();
+	ImGui::Columns(3);
+	DoImGuiTableHeader(hdr);
+
+	std::vector<WwiseObject*> sortedObjects = GetSortedWwiseObjects(transfer, hdr, &g_transferWindowState.wwiseObjectFilter);
+
+	for (std::vector<WwiseObject*>::iterator it = sortedObjects.begin(); it != sortedObjects.end(); ++it)
+	{
+		WwiseObject* obj = (*it);
+		
+		if (ImGui::Selectable(obj->name.c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
+		{
+			transfer.SetSelectedRenderParents(obj->guid);
+			//ImGui::CloseCurrentPopup();
+		}
+		ImGui::NextColumn();
+		ImGui::Text("%s", obj->path.c_str());
+		ImGui::NextColumn();
+		ImGui::Text("%s", obj->type.c_str());
+		ImGui::NextColumn();
+	}
+
+	ImGui::Columns();
+}
+
+
+static void DoRenderQueueWindow(WAAPITransfer& transfer)
 {
 	if (ImGui::BeginChild("RenderQueue"))
 	{
+		ImGuiTableHeader& hdr = g_transferWindowState.renderQueueHeader;
+
 		ImGuiIO const& io = ImGui::GetIO();
 		transfer.UpdateRenderQueue();
 
@@ -889,7 +945,7 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer, ImGuiTableHeader& hdr)
 				}
 			}
 
-			if(rightClicked && !io.KeyCtrl)
+			if(rightClicked && !obj->isSelectedImGui && !io.KeyCtrl)
 			{
 				// Clear other selected
 				for (RenderItem* obj2 : sortedObjects)
@@ -912,17 +968,77 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer, ImGuiTableHeader& hdr)
 
 		ImGui::Columns();
 
+		bool openSetWwiseParentPopup = false;
+
 		if (ImGui::BeginPopupContextItem("RenderQueuePopup"))
 		{
+			if (ImGui::MenuItem("Set Wwise Parent"))
+			{
+				openSetWwiseParentPopup = true;
+			}
+
 			if (ImGui::BeginMenu("Import Operation"))
 			{
 				if (ImGui::MenuItem("Create New"))
 				{
+					transfer.SetSelectedImportOperation(WAAPIImportOperation::createNew);
+				}
 
+				if (ImGui::MenuItem("Replace Existing"))
+				{
+					transfer.SetSelectedImportOperation(WAAPIImportOperation::replaceExisting);
+				}
+
+				if (ImGui::MenuItem("Use Existing"))
+				{
+					transfer.SetSelectedImportOperation(WAAPIImportOperation::useExisting);
 				}
 
 				ImGui::EndMenu();
 			}
+
+
+			if (ImGui::BeginMenu("Import Type"))
+			{
+				if (ImGui::MenuItem("Dialog"))
+				{
+					transfer.SetSelectedImportObjectType(ImportObjectType::Voice);
+				}
+
+				if (ImGui::MenuItem("SFX"))
+				{
+					transfer.SetSelectedImportObjectType(ImportObjectType::SFX);
+				}
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Language"))
+			{
+				uint32 constexpr numWwiseLanguages = sizeof(WwiseLanguages) / sizeof(*WwiseLanguages);
+				bool selectedLangTable[numWwiseLanguages] = {};
+				transfer.ForEachSelectedRenderItem([&selectedLangTable](RenderItem& renderItem) { selectedLangTable[renderItem.wwiseLanguageIndex] = true; });
+				
+				for (uint32 wwiseLangIdx = 0; wwiseLangIdx < numWwiseLanguages; ++wwiseLangIdx)
+				{
+					if (ImGui::MenuItem(WwiseLanguages[wwiseLangIdx], nullptr, selectedLangTable[wwiseLangIdx]))
+					{
+						transfer.SetSelectedDialogLanguage(wwiseLangIdx);
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (openSetWwiseParentPopup)
+		{
+			ImGui::OpenPopup("SetWwiseParentPopup");
+		}
+
+		if (ImGui::BeginPopup("SetWwiseParentPopup"))
+		{
+			DoWwiseParentPopup(transfer);
 			ImGui::EndPopup();
 		}
 	}
@@ -940,19 +1056,17 @@ static void TransferThreadFn()
 	}
 	
 	WAAPITransfer transfer;
-	ImGuiTableHeader wwiseObjectTable;
-	ImGuiTableHeader renderItemTable;
 
 	{
 		static char const* const wwiseObjColNames[] = { "Name", "Path", "Type" };
-		wwiseObjectTable.colNames = wwiseObjColNames;
-		wwiseObjectTable.numCols = int(sizeof(wwiseObjColNames) / sizeof(*wwiseObjColNames));
+		g_transferWindowState.wwiseObjectHeader.colNames = wwiseObjColNames;
+		g_transferWindowState.wwiseObjectHeader.numCols = int(sizeof(wwiseObjColNames) / sizeof(*wwiseObjColNames));
 	}
 
 	{
 		static char const* const renderItemColNames[] = { "File", "Wwise Parent", "Import Type", "Language", "Import Op" };
-		renderItemTable.colNames = renderItemColNames;
-		renderItemTable.numCols = int(sizeof(renderItemColNames) / sizeof(*renderItemColNames));
+		g_transferWindowState.renderQueueHeader.colNames = renderItemColNames;
+		g_transferWindowState.renderQueueHeader.numCols = int(sizeof(renderItemColNames) / sizeof(*renderItemColNames));
 	}
 
 	while (!glfwWindowShouldClose(ImGuiHandler::GetGLFWWindow()))
@@ -980,13 +1094,13 @@ static void TransferThreadFn()
 		{
 			if (ImGui::BeginTabItem("Render Queue"))
 			{
-				DoRenderQueueWindow(transfer, renderItemTable);
+				DoRenderQueueWindow(transfer);
 				ImGui::EndTabItem();
 			}
 
 			if (ImGui::BeginTabItem("Wwise Objects"))
 			{
-				DoWwiseObjectWindow(transfer, wwiseObjectTable);
+				DoWwiseObjectWindow(transfer);
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
