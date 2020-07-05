@@ -555,30 +555,29 @@ fs::path GetRenderQueueDir()
     return path;
 }
 
-
-std::string GetTextForImportObject(ImportObjectType importObject)
+char const* GetTextForImportObject(ImportObjectType importObject)
 {
     switch (importObject)
     {
 
     case ImportObjectType::SFX:
     {
-        return std::string("SFX");
+        return "SFX";
     } break;
 
     case ImportObjectType::Music:
     {
-        return std::string("Music");
+        return "Music";
     } break;
 
     case ImportObjectType::Voice:
     {
-        return std::string("Dialog");
+        return "Dialog";
     } break;
 
     default:
     {
-        return std::string();
+		return "";
     } break;
 
     }

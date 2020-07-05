@@ -69,21 +69,21 @@ private:
 };
 
 
-inline std::string GetImportOperationString(WAAPIImportOperation operation)
+inline char const* GetImportOperationString(WAAPIImportOperation operation)
 {
     switch (operation)
     {
     case WAAPIImportOperation::createNew:
-        return std::string("createNew");
+        return "createNew";
         break;
     case WAAPIImportOperation::useExisting:
-        return std::string("useExisting");
+        return "useExisting";
         break;
     case WAAPIImportOperation::replaceExisting:
-        return std::string("replaceExisting");
+        return "replaceExisting";
         break;
     default:
-        return std::string();
+        return "";
         break;
     }
 }

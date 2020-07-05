@@ -16,7 +16,7 @@
 class WAAPITransfer
 {
 public:
-    WAAPITransfer(HWND window, int treeId, int statusTextid, int transferWindowId);
+    WAAPITransfer();
     ~WAAPITransfer() = default;
 
     WAAPITransfer(const WAAPITransfer&) = delete;
@@ -127,11 +127,9 @@ public:
 
     // object owns this hwnd
     HWND hwnd;
-
 	// recently entered wwise original subpaths
 	static std::unordered_set<std::string> s_originalPathHistory;
 
-private:
     //Window id's
     int m_statusTextId;
     int m_wwiseViewId;
@@ -165,12 +163,6 @@ private:
     //Socket client for Waapi connection
     AK::WwiseAuthoringAPI::Client m_client;
 
-    //Call this on window invocation to add cached wwise objects into tree view
-    void RecreateWwiseView();
-
-    //Call this on window invocation to add cached render queue objects into tree view
-    void RecreateTransferListView();
-
     //Add a wwise object to treeview and internal data structures
     MappedListViewID CreateWwiseObject(const std::string &wwiseguid, const WwiseObject &wwiseInfo);
     MappedListViewID AddWwiseObjectToView(const std::string &guid, const WwiseObject &wwiseObject);
@@ -201,4 +193,8 @@ private:
 
     //Map render queue list item (with mapped index) to the render item id
     std::unordered_map<MappedListViewID, RenderItemID> m_renderListViewMap;
+
+	bool m_connectionStatus = false;
+
+	std::string m_connectedWwiseVersion;
 };

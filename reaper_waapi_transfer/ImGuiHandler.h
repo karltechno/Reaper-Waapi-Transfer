@@ -12,6 +12,7 @@ void ShutdownWindow();
 
 GLFWwindow* GetGLFWWindow();
 HWND GetNativeWindow();
+void BringToForeground();
 
 void BeginFrame();
 void EndFrame();

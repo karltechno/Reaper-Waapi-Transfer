@@ -47,11 +47,7 @@ static void ImGui_KeyCallback(GLFWwindow* window, int key, int scancode, int act
 	io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
 	io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
 	io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-#ifdef _WIN32
 	io.KeySuper = false;
-#else
-	io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
-#endif
 }
 
 static void ImGui_CharCallback(GLFWwindow* window, unsigned int c)
@@ -192,6 +188,7 @@ void ShutdownWindow()
 	glfwDestroyWindow(g_window);
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
+	glfwTerminate();
 }
 
 GLFWwindow* GetGLFWWindow()
@@ -201,13 +198,24 @@ GLFWwindow* GetGLFWWindow()
 
 HWND GetNativeWindow()
 {
-	return glfwGetWin32Window(g_window);
+	if (g_window)
+	{
+		return glfwGetWin32Window(g_window);
+	}
+
+	return 0;
+}
+
+void BringToForeground()
+{
+	if (g_window)
+	{
+		SetForegroundWindow(glfwGetWin32Window(g_window));
+	}
 }
 
 void BeginFrame()
 {
-	ImGui_ImplOpenGL3_NewFrame();
-
 	// Setup display size (every frame to accommodate for window resizing)
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -221,13 +229,13 @@ void BeginFrame()
 		io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 	}
 
-	io.DeltaTime = 1.0f / 60.0f; // todo
-
-	ImGui::NewFrame();
+	io.DeltaTime = 1.0f / 30.0f; // todo
 
 	glfwPollEvents();
-
 	ImGui_ImplGlfw_UpdateMousePosAndButtons();
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui::NewFrame();
 }
 
 void EndFrame()

@@ -9,7 +9,7 @@
 const std::string QueuedRenderPrjText("QUEUED_RENDER_OUTFILE");
 
 
-std::string GetTextForImportObject(ImportObjectType importObject);
+char const* GetTextForImportObject(ImportObjectType importObject);
 
 
 enum RenderItemFlags
