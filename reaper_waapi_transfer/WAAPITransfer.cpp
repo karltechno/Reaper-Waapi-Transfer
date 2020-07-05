@@ -415,6 +415,8 @@ void WAAPITransfer::WaapiImportLoop()
     //PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, 
     //            TRANSFER_THREAD_WPARAM::LAUNCH_RENDER_QUEUE_REQUEST, 0);
 
+	CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
+
     std::size_t totalRenderItems = s_renderQueueCachedProjects.size();
     uint32 numItemsProcessed = 0;
     bool renderQueueActive = true;

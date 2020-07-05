@@ -792,7 +792,6 @@ void DoWwiseObjectWindow(WAAPITransfer& transfer)
 
 	if (ImGui::Button("Add Selected Wwise Objects"))
 	{
-		//CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
 		transfer.AddSelectedWwiseObjects();
 	}
 
@@ -817,7 +816,6 @@ static void DoWwiseParentPopup(WAAPITransfer& transfer)
 		if (ImGui::Selectable(obj->name.c_str(), false, ImGuiSelectableFlags_SpanAllColumns))
 		{
 			transfer.SetSelectedRenderParents(obj->guid);
-			//ImGui::CloseCurrentPopup();
 		}
 		ImGui::NextColumn();
 		ImGui::Text("%s", obj->path.c_str());
@@ -832,7 +830,7 @@ static void DoWwiseParentPopup(WAAPITransfer& transfer)
 
 static void DoRenderQueueWindow(WAAPITransfer& transfer)
 {
-	if (ImGui::BeginChild("RenderQueue"))
+	if (ImGui::BeginChild("RenderQueue", ImVec2(0.0f, -25.0f)))
 	{
 		ImGuiTableHeader& hdr = g_transferWindowState.renderQueueHeader;
 
@@ -1042,9 +1040,18 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 			ImGui::EndPopup();
 		}
 	}
-
-
 	ImGui::EndChild();
+
+	if (ImGui::Button("Submit Render Queue"))
+	{
+		auto submitFn = [](void* ctx)
+		{
+			auto transferPtr = (WAAPITransfer*)ctx;
+			transferPtr->RunRenderQueueAndImport();
+		};
+		// TODO: This is race city at the moment.
+		CallOnReaperThread(submitFn, &transfer);
+	}
 }
 
 static void TransferThreadFn()
