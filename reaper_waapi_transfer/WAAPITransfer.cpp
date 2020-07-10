@@ -229,6 +229,8 @@ void WAAPITransfer::RunRenderQueueAndImport()
     m_closeTransferThreadByUser = false;
     std::thread(&WAAPITransfer::WaapiImportLoop, this).detach();
     //OpenProgressWindow(hwnd, this);
+	m_isTransferring = true;
+	m_transferProgress.store(0, std::memory_order_relaxed);
 }
 
 void WAAPITransfer::SetStatusText(const std::string &status) const
@@ -447,8 +449,7 @@ void WAAPITransfer::WaapiImportLoop()
 
                 if (WaapiImportByProject(iter->first, projSourceNote))
                 {
-                    //inform main thread with new progress bar %                   
-                    //PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, TRANSFER_THREAD_WPARAM::IMPORT_SUCCESS, progressBarStep);
+					m_transferProgress.store(progressBarStep, std::memory_order_relaxed);
 
                     //success, delete backup
                     fs::remove(iter->first + RENDER_QUEUE_BACKUP_APPEND);
@@ -505,6 +506,8 @@ void WAAPITransfer::WaapiImportLoop()
         importWparam = allImportsSucceeded ? THREAD_EXIT_SUCCESS : THREAD_EXIT_FAIL;
     }
     //PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, importWparam, 0);
+
+	m_isTransferring = false;
 }
 
 bool WAAPITransfer::WaapiImportByProject(const std::string &projectPath, const std::string &RecallProjectPath)

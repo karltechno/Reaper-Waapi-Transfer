@@ -52,7 +52,6 @@ public:
     bool Connect();
 
     //win32 helpers
-    HWND GetStatusTextHWND()        const { return GetDlgItem(hwnd, m_statusTextId); }
     HWND GetWwiseObjectListHWND()   const { return GetDlgItem(hwnd, m_wwiseViewId); }
     HWND GetRenderViewHWND()        const { return GetDlgItem(hwnd, m_transferWindowId); }
 
@@ -76,9 +75,6 @@ public:
     
     //removes all treeview objects and clears cache
     void RemoveAllWwiseObjects();
-
-    //Call on window invocation to setup the list/tree views and recall state data into them
-    void SetupAndRecreateWindow();
 
     //Checks the render queue to see if anything has been added or removed
     //updates necessary state and GUI - called on loop with WM_TIMER
@@ -165,7 +161,6 @@ public:
 
     //Add a wwise object to treeview and internal data structures
     MappedListViewID CreateWwiseObject(const std::string &wwiseguid, const WwiseObject &wwiseInfo);
-    MappedListViewID AddWwiseObjectToView(const std::string &guid, const WwiseObject &wwiseObject);
 
     //Remove all render items with a specific project path
     void RemoveRenderItemsByProject(const fs::path &projectPath);
@@ -173,11 +168,6 @@ public:
 
     //Add all render items with a specific project path
     void AddRenderItemsByProject(const fs::path &projectPath);
-
-    //Adds a render item to list view and data structures
-    //return is render id
-    RenderItemID CreateRenderItem(const RenderItem &renderItem);
-    MappedListViewID AddRenderItemToView(RenderItemID id, const RenderItem &renderitem);
 
     RenderItemMap::iterator RemoveRenderItemFromList(RenderItemMap::iterator it);
     RenderItemMap::iterator RemoveRenderItemFromList(uint32 renderItemId);
@@ -197,4 +187,7 @@ public:
 	bool m_connectionStatus = false;
 
 	std::string m_connectedWwiseVersion;
+
+	std::atomic<bool> m_isTransferring = false;
+	std::atomic<int> m_transferProgress = 0;
 };

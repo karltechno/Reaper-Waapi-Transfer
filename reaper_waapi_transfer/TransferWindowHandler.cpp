@@ -835,7 +835,6 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 		ImGuiTableHeader& hdr = g_transferWindowState.renderQueueHeader;
 
 		ImGuiIO const& io = ImGui::GetIO();
-		transfer.UpdateRenderQueue();
 
 		assert(hdr.numCols == 5);
 		ImGui::Columns(5);
@@ -1044,13 +1043,7 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 
 	if (ImGui::Button("Submit Render Queue"))
 	{
-		auto submitFn = [](void* ctx)
-		{
-			auto transferPtr = (WAAPITransfer*)ctx;
-			transferPtr->RunRenderQueueAndImport();
-		};
-		// TODO: This is race city at the moment.
-		CallOnReaperThread(submitFn, &transfer);
+		transfer.RunRenderQueueAndImport();
 	}
 }
 
@@ -1078,6 +1071,13 @@ static void TransferThreadFn()
 
 	while (!glfwWindowShouldClose(ImGuiHandler::GetGLFWWindow()))
 	{
+		// TODO: Shoddy thread safety.
+		// TODO: Socket calls off GUI thread.
+		if (!transfer.m_isTransferring.load(std::memory_order_relaxed))
+		{
+			transfer.UpdateRenderQueue();
+		}
+
 		ImGuiHandler::BeginFrame();
 
 		GLFWwindow* glfwWindow = ImGuiHandler::GetGLFWWindow();
@@ -1096,6 +1096,22 @@ static void TransferThreadFn()
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
 		ImGui::Begin("ReaperWaapiTransfer", nullptr, windowFlags);
 
+		if (ImGui::BeginPopupModal("Transferring", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			int percent = transfer.m_transferProgress.load(std::memory_order_relaxed);
+			ImGui::Text("Transferring, please wait (%d%%)...", percent);
+			ImGui::ProgressBar(percent / 100.0f);
+			if (ImGui::Button("Cancel"))
+			{
+				transfer.CancelTransferThread();
+			}
+			if (!transfer.m_isTransferring.load(std::memory_order_relaxed))
+			{
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+
 		DoMenuBar(transfer);
 		if (ImGui::BeginTabBar("Tabs"))
 		{
@@ -1111,6 +1127,11 @@ static void TransferThreadFn()
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
+		}
+
+		if (transfer.m_isTransferring.load(std::memory_order_relaxed))
+		{
+            ImGui::OpenPopup("Transferring");
 		}
 
 		ImGui::End();
