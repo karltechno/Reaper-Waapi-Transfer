@@ -534,7 +534,7 @@ std::vector<fs::path> GetRenderQueueProjectFiles()
             fs::remove(iter);
             continue;
         }
-        else
+        else if(iter.path().extension() == ".rpp")
         {
             paths.push_back(iter.path());
         }
