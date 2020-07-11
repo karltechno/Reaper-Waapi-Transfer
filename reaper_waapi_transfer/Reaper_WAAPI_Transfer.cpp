@@ -39,8 +39,8 @@ gaccel_register_t actionOpenRecallWindow = { { 0, 0, 0 }, "Open WAAPI recall win
 
 //produces an error message during reaper startup
 //similar to SWS function ErrMsg in sws_extension.cpp
-void StartupError(const std::string &errMsg, 
-                  uint32 messageBoxFlags = MB_ICONERROR, 
+void StartupError(const std::string &errMsg,
+                  uint32 messageBoxFlags = MB_ICONERROR,
                   const std::string &caption = "Waapi Transfer Error")
 {
     if (!IsREAPER || IsREAPER())
@@ -52,28 +52,28 @@ void StartupError(const std::string &errMsg,
 
 LRESULT CALLBACK WndProcMainHook(int code, WPARAM wParam, LPARAM lParam)
 {
-	if (code < 0 || !(wParam & PM_REMOVE))
-	{
-		return CallNextHookEx(nullptr, code, wParam, lParam);
-	}
+    if (code < 0 || !(wParam & PM_REMOVE))
+    {
+        return CallNextHookEx(nullptr, code, wParam, lParam);
+    }
 
-	MSG* msg = (MSG*)lParam;
+    MSG* msg = (MSG*)lParam;
 
-	// The Reaper API is generally not thread safe unless specified.
-	// This 'hack' allows us to call an abitrary function on the REAPER UI thread by posting a function pointer
-	// to be called on the its message loop. We then use a custom message ID and hook the message loop to execute it.
-	if (msg->message == g_callOnUiThreadMsgId)
-	{
-		((CallOnReaperFn)msg->wParam)((void*)msg->lParam);
-		return 0;
-	}
+    // The Reaper API is generally not thread safe unless specified.
+    // This 'hack' allows us to call an abitrary function on the REAPER UI thread by posting a function pointer
+    // to be called on the its message loop. We then use a custom message ID and hook the message loop to execute it.
+    if (msg->message == g_callOnUiThreadMsgId)
+    {
+        ((CallOnReaperFn)msg->wParam)((void*)msg->lParam);
+        return 0;
+    }
 
-	return CallNextHookEx(0, code, wParam, lParam);
+    return CallNextHookEx(0, code, wParam, lParam);
 }
 
 void CallOnReaperThread(CallOnReaperFn fn, void* ctx)
 {
-	PostMessage(g_parentWindow, g_callOnUiThreadMsgId, WPARAM(fn), LPARAM(ctx));
+    PostMessage(g_parentWindow, g_callOnUiThreadMsgId, WPARAM(fn), LPARAM(ctx));
 }
 
 extern "C"
@@ -83,8 +83,8 @@ extern "C"
         //return if plugin is exiting
         if (!rec)
         {
-			UnhookWindowsHookEx(g_winKbHook);
-			UnhookWindowsHookEx(g_messageHook);
+            UnhookWindowsHookEx(g_winKbHook);
+            UnhookWindowsHookEx(g_messageHook);
             return 0;
         }
 
@@ -116,11 +116,11 @@ extern "C"
         GET_FUNC_AND_CHKERROR(CountProjectMarkers);
         GET_FUNC_AND_CHKERROR(ShowConsoleMsg);
 
-		g_winKbHook = SetWindowsHookExA(WH_KEYBOARD_LL, TransferWindow_ReaperKeyboardHook, g_hInst, 0);
-		g_callOnUiThreadMsgId = RegisterWindowMessageA("REAPER_WAAPI_TRANSFER_UICALL");
-		g_messageHook = SetWindowsHookExA(WH_GETMESSAGE, WndProcMainHook, g_hInst, GetCurrentThreadId());
+        g_winKbHook = SetWindowsHookExA(WH_KEYBOARD_LL, TransferWindow_ReaperKeyboardHook, g_hInst, 0);
+        g_callOnUiThreadMsgId = RegisterWindowMessageA("REAPER_WAAPI_TRANSFER_UICALL");
+        g_messageHook = SetWindowsHookExA(WH_GETMESSAGE, WndProcMainHook, g_hInst, GetCurrentThreadId());
 
-		//exit if any func pointer couldn't be found
+        //exit if any func pointer couldn't be found
         if (funcerrcnt)
         {
             StartupError("An error occured whilst initializing WAAPI Transfer.\n"
@@ -175,13 +175,13 @@ extern "C"
             { "SwitchContainer", IDI_SWITCHCONTAINER },
             { "Folder", IDI_FOLDER },
             { "MusicSegment", IDI_MUSICSEGMENT },
-			{ "MusicSwitchContainer", IDI_MUSICSWITCH },
-			{ "MusicPlaylistContainer", IDI_MUSICPLAYLIST }
-        });
+            { "MusicSwitchContainer", IDI_MUSICSWITCH },
+            { "MusicPlaylistContainer", IDI_MUSICPLAYLIST }
+                                  });
 
         //lookup wwise Waapi info
         int waapiPort;
-		WaapiSetting waapiEnabled;
+        WaapiSetting waapiEnabled;
         if (GetWaapiSettings(waapiEnabled, waapiPort))
         {
             if (waapiEnabled == WaapiSetting::Disabled)

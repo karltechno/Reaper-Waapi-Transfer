@@ -26,10 +26,10 @@ void WAAPITransfer::SetSelectedRenderParents(std::string const& wwiseObjGuid)
 {
     bool isMusicSegment = GetWwiseObjectByGUID(wwiseObjGuid).isMusicContainer;
 
-	ForEachSelectedRenderItem([this, &wwiseObjGuid, isMusicSegment](RenderItem& item)
-	{
-		SetRenderItemWwiseParent(item, wwiseObjGuid, isMusicSegment);
-	});
+    ForEachSelectedRenderItem([this, &wwiseObjGuid, isMusicSegment](RenderItem& item)
+    {
+        SetRenderItemWwiseParent(item, wwiseObjGuid, isMusicSegment);
+    });
 }
 
 
@@ -37,7 +37,7 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
 {
     bool musicTypeMismatch = false;
 
-	ForEachSelectedRenderItem([&musicTypeMismatch, typeToSet, this](RenderItem& renderItem)
+    ForEachSelectedRenderItem([&musicTypeMismatch, typeToSet, this](RenderItem& renderItem)
     {
         bool isParentMusicSegment = false;
         if (!renderItem.wwiseGuid.empty())
@@ -65,7 +65,7 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
         }
 
         renderItem.importObjectType = typeToSet;
-	});
+    });
 
     if (musicTypeMismatch)
     {
@@ -75,9 +75,9 @@ void WAAPITransfer::SetSelectedImportObjectType(ImportObjectType typeToSet)
 
 void WAAPITransfer::SetSelectedDialogLanguage(int wwiseLanguageIndex)
 {
-    ForEachSelectedRenderItem([wwiseLanguageIndex,this](RenderItem& item) 
+    ForEachSelectedRenderItem([wwiseLanguageIndex, this](RenderItem& item)
     {
-		item.wwiseLanguageIndex = wwiseLanguageIndex;
+        item.wwiseLanguageIndex = wwiseLanguageIndex;
     });
 }
 
@@ -104,17 +104,17 @@ void WAAPITransfer::UpdateRenderQueue()
     }
 
     //add render items that need to be added
-    std::for_each(projectFilesToAdd.begin(), 
+    std::for_each(projectFilesToAdd.begin(),
                   projectFilesToAdd.end(),
-                  [this](const fs::path &path) 
-                  {
-                   auto iter = s_renderQueueCachedProjects.find(path.generic_string());
+                  [this](const fs::path &path)
+    {
+        auto iter = s_renderQueueCachedProjects.find(path.generic_string());
 
-                   if (iter == s_renderQueueCachedProjects.end())
-                   {
-                       AddRenderItemsByProject(path);
-                   }
-                   });
+        if (iter == s_renderQueueCachedProjects.end())
+        {
+            AddRenderItemsByProject(path);
+        }
+    });
 }
 
 RenderItem &WAAPITransfer::GetRenderItemFromRenderItemId(RenderItemID renderItemId)
@@ -157,11 +157,11 @@ bool WAAPITransfer::Connect()
             //create a status text string and set it
             std::stringstream status;
             status << "Connected on port " + std::to_string(g_Waapi_Port) + ": ";
-			m_connectedWwiseVersion = wwiseInfo["version"]["displayName"].GetVariant().GetString();
+            m_connectedWwiseVersion = wwiseInfo["version"]["displayName"].GetVariant().GetString();
         }
     }
 
-	m_connectionStatus = success;
+    m_connectionStatus = success;
     return success;
 }
 
@@ -180,12 +180,12 @@ void WAAPITransfer::RunRenderQueueAndImport()
         SetStatusText("Render cancelled, couldn't connect to Wwise.");
         return;
     }
-    
+
     //find out how many items haven't been targeted to wwise
     uint64_t numEmptyRenders = std::count_if(s_renderQueueItems.begin(), s_renderQueueItems.end(),
                                              [](const auto &item)
-                                             { return item.second.first.wwiseGuid.empty(); });
-    
+    { return item.second.first.wwiseGuid.empty(); });
+
     if (numEmptyRenders)
     {
         //nothing selected, just return
@@ -196,11 +196,11 @@ void WAAPITransfer::RunRenderQueueAndImport()
         }
         else
         {
-            std::string mboxText = std::to_string(numEmptyRenders) 
+            std::string mboxText = std::to_string(numEmptyRenders)
                 + " items do not have Wwise parents and will be rendered but not imported"
-                  "\nWould you like to render anyway?";
+                "\nWould you like to render anyway?";
 
-            int mboxReturn = MessageBox(g_parentWindow, mboxText.c_str(), 
+            int mboxReturn = MessageBox(g_parentWindow, mboxText.c_str(),
                                         "WAAPI Transfer", MB_YESNO);
 
             if (mboxReturn != IDYES)
@@ -229,8 +229,8 @@ void WAAPITransfer::RunRenderQueueAndImport()
     m_closeTransferThreadByUser = false;
     std::thread(&WAAPITransfer::WaapiImportLoop, this).detach();
     //OpenProgressWindow(hwnd, this);
-	m_isTransferring = true;
-	m_transferProgress.store(0, std::memory_order_relaxed);
+    m_isTransferring = true;
+    m_transferProgress.store(0, std::memory_order_relaxed);
 }
 
 void WAAPITransfer::SetStatusText(const std::string &status) const
@@ -249,7 +249,7 @@ void WAAPITransfer::AddSelectedWwiseObjects()
         SetStatusText("WAAPI Error: " + GetResultsErrorMessage(results));
         return;
     }
-    
+
     AkJson::Array resultsArray;
     GetWaapiResultsArray(resultsArray, results);
 
@@ -276,13 +276,13 @@ void WAAPITransfer::AddSelectedWwiseObjects()
         wwiseNode.type = wwiseObjectType;
         wwiseNode.path = result["path"].GetVariant().GetString();
         wwiseNode.name = result["name"].GetVariant().GetString();
-		wwiseNode.guid = wwiseObjectGuid;
-		wwiseNode.isMusicContainer = IsMusicContainer(wwiseObjectType);
+        wwiseNode.guid = wwiseObjectGuid;
+        wwiseNode.isMusicContainer = IsMusicContainer(wwiseObjectType);
 
         CreateWwiseObject(wwiseObjectGuid, wwiseNode);
         ++numItemsAdded;
     }
-            
+
     if (numItemsAdded)
     {
         SetStatusText(std::to_string(numItemsAdded) + " Wwise objects added.");
@@ -313,7 +313,7 @@ void WAAPITransfer::RemoveWwiseObject(MappedListViewID toRemove)
 
 void WAAPITransfer::RemoveAllWwiseObjects()
 {
-    for (auto it = s_renderQueueItems.begin(), 
+    for (auto it = s_renderQueueItems.begin(),
          endIt = s_renderQueueItems.end();
          it != endIt;
          ++it)
@@ -321,7 +321,7 @@ void WAAPITransfer::RemoveAllWwiseObjects()
         RemoveRenderItemWwiseParent(it);
     }
 
-	s_activeWwiseObjects.clear();
+    s_activeWwiseObjects.clear();
     m_wwiseListViewMap.clear();
 }
 
@@ -330,7 +330,7 @@ void WAAPITransfer::RemoveAllWwiseObjects()
 MappedListViewID WAAPITransfer::CreateWwiseObject(const std::string &guid, const WwiseObject &wwiseInfo)
 {
     s_activeWwiseObjects.insert({ guid, wwiseInfo });
-    
+
     return 0;
 }
 
@@ -342,7 +342,7 @@ void WAAPITransfer::RemoveRenderItemsByProject(const fs::path &projectPath)
     RemoveRenderItemsByProject(iter);
 }
 
-void WAAPITransfer::RemoveRenderItemsByProject(RenderProjectMap::iterator it) 
+void WAAPITransfer::RemoveRenderItemsByProject(RenderProjectMap::iterator it)
 {
     for (uint32 renderId : it->second)
     {
@@ -363,8 +363,8 @@ void WAAPITransfer::AddRenderItemsByProject(const fs::path &path)
         //get previous import type
         renderItem.importOperation = lastImportOperation;
         //add lvitem
-		renderItem.renderItemId = s_RenderItemIdCounter++;
-		s_renderQueueItems.insert({ renderItem.renderItemId, { renderItem, 0 } });
+        renderItem.renderItemId = s_RenderItemIdCounter++;
+        s_renderQueueItems.insert({ renderItem.renderItemId, { renderItem, 0 } });
         renderIds.push_back(renderItem.renderItemId);
     }
     s_renderQueueCachedProjects.insert({ path.generic_string(), renderIds });
@@ -417,7 +417,7 @@ void WAAPITransfer::WaapiImportLoop()
     //PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, 
     //            TRANSFER_THREAD_WPARAM::LAUNCH_RENDER_QUEUE_REQUEST, 0);
 
-	CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
+    CallOnReaperThread([](void*) {Main_OnCommand(41207, 1); }, nullptr);
 
     std::size_t totalRenderItems = s_renderQueueCachedProjects.size();
     uint32 numItemsProcessed = 0;
@@ -449,19 +449,19 @@ void WAAPITransfer::WaapiImportLoop()
 
                 if (WaapiImportByProject(iter->first, projSourceNote))
                 {
-					m_transferProgress.store(progressBarStep, std::memory_order_relaxed);
+                    m_transferProgress.store(progressBarStep, std::memory_order_relaxed);
 
                     //success, delete backup
                     fs::remove(iter->first + RENDER_QUEUE_BACKUP_APPEND);
 
-					//if we aren't copying then we should delete files in the reaper export folder
-					if (!ShouldCopyToOriginals())
-					{
-						for (RenderItemID id : iter->second)
-						{
-							fs::remove(GetRenderItemFromRenderItemId(id).audioFilePath);
-						}
-					}
+                    //if we aren't copying then we should delete files in the reaper export folder
+                    if (!ShouldCopyToOriginals())
+                    {
+                        for (RenderItemID id : iter->second)
+                        {
+                            fs::remove(GetRenderItemFromRenderItemId(id).audioFilePath);
+                        }
+                    }
 
                     iter = renderQueueProjectsCopy.erase(iter);
                 }
@@ -481,7 +481,7 @@ void WAAPITransfer::WaapiImportLoop()
                 if (renderQueueProjectsCopy.empty())
                 {
                     renderQueueActive = false;
-                    break;        
+                    break;
                 }
             }
             else
@@ -507,7 +507,7 @@ void WAAPITransfer::WaapiImportLoop()
     }
     //PostMessage(hwnd, WM_TRANSFER_THREAD_MSG, importWparam, 0);
 
-	m_isTransferring = false;
+    m_isTransferring = false;
 }
 
 bool WAAPITransfer::WaapiImportByProject(const std::string &projectPath, const std::string &RecallProjectPath)
@@ -548,7 +548,7 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
         for (uint32 i = 0; i < numItems; ++i)
         {
             const RenderItem &renderItem = GetRenderItemFromRenderItemId(renderIdVec[i + (batch * WAAPI_IMPORT_BATCH_SIZE)]);
-            
+
             //check if object has wwise GUID attached
             if (renderItem.wwiseGuid.empty())
             {
@@ -559,55 +559,55 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
                 { "audioFile", AkVariant(renderItem.audioFilePath.generic_string()) },
                 { "importLocation", AkVariant(renderItem.wwiseGuid) },
                 { "objectType", AkVariant("Sound") }
-            });
+                                       });
 
             auto &importMap = importItem.GetMap();
 
             switch (renderItem.importObjectType)
             {
 
-            case ImportObjectType::SFX:
-            {
-                importMap.insert({ "objectPath", AkVariant("<Sound SFX>" + renderItem.outputFileName) });
-				importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
-            } break;
+                case ImportObjectType::SFX:
+                {
+                    importMap.insert({ "objectPath", AkVariant("<Sound SFX>" + renderItem.outputFileName) });
+                    importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
+                } break;
 
-            case ImportObjectType::Voice:
-            {
-                importMap.insert({ "importLanguage", AkVariant(WwiseLanguages[renderItem.wwiseLanguageIndex]) });
-                importMap.insert({ "objectPath", AkVariant("<Sound Voice>" + renderItem.outputFileName) });
-				importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
-            } break;
+                case ImportObjectType::Voice:
+                {
+                    importMap.insert({ "importLanguage", AkVariant(WwiseLanguages[renderItem.wwiseLanguageIndex]) });
+                    importMap.insert({ "objectPath", AkVariant("<Sound Voice>" + renderItem.outputFileName) });
+                    importMap.insert({ "audioSourceNotes", AkVariant(RecallProjectPath) });
+                } break;
 
-            case ImportObjectType::Music:
-            {
-                importMap.insert({ "objectPath", AkVariant("<Music Track>" + renderItem.outputFileName) });
-            } break;
+                case ImportObjectType::Music:
+                {
+                    importMap.insert({ "objectPath", AkVariant("<Music Track>" + renderItem.outputFileName) });
+                } break;
 
             }
 
-			if (!renderItem.wwiseOriginalsSubpath.empty())
-			{
-				//TODO: Check for path correctness
-				importMap.insert({ "originalsSubFolder", AkVariant(renderItem.wwiseOriginalsSubpath) });
-			}
+            if (!renderItem.wwiseOriginalsSubpath.empty())
+            {
+                //TODO: Check for path correctness
+                importMap.insert({ "originalsSubFolder", AkVariant(renderItem.wwiseOriginalsSubpath) });
+            }
 
             switch (renderItem.importOperation)
             {
-            case WAAPIImportOperation::createNew:
-            {
-                itemsCreateNew.push_back(importItem);
-            } break;
+                case WAAPIImportOperation::createNew:
+                {
+                    itemsCreateNew.push_back(importItem);
+                } break;
 
-            case WAAPIImportOperation::replaceExisting:
-            {
-                itemsReplaceExisting.push_back(importItem);
-            } break;
+                case WAAPIImportOperation::replaceExisting:
+                {
+                    itemsReplaceExisting.push_back(importItem);
+                } break;
 
-            case WAAPIImportOperation::useExisting:
-            {
-                itemsUseExisting.push_back(importItem);
-            } break;
+                case WAAPIImportOperation::useExisting:
+                {
+                    itemsUseExisting.push_back(importItem);
+                } break;
 
 
             }
@@ -633,20 +633,20 @@ void WAAPITransfer::SetSelectedImportOperation(WAAPIImportOperation operation)
 {
     ForEachSelectedRenderItem([this, operation](RenderItem& renderItem)
     {
-		renderItem.importOperation = operation;
+        renderItem.importOperation = operation;
     });
 }
 
 void WAAPITransfer::ForEachSelectedRenderItem(std::function<void(RenderItem&)> const& func) const
 {
-	for (auto it = s_renderQueueItems.begin(); it != s_renderQueueItems.end(); ++it)
-	{
-		RenderItem& renderItem = it->second.first;
-		if (renderItem.isSelectedImGui)
-		{
-			func(renderItem);
-		}
-	}
+    for (auto it = s_renderQueueItems.begin(); it != s_renderQueueItems.end(); ++it)
+    {
+        RenderItem& renderItem = it->second.first;
+        if (renderItem.isSelectedImGui)
+        {
+            func(renderItem);
+        }
+    }
 }
 
 void WAAPITransfer::SetRenderItemWwiseParent(RenderItem& item, const std::string &wwiseParentGuid, bool isMusicSegment)
@@ -728,6 +728,6 @@ uint32 WAAPITransfer::s_RenderItemIdCounter = 0;
 
 WAAPIImportOperation WAAPITransfer::lastImportOperation = WAAPIImportOperation::createNew;
 
-std::unordered_set<std::string> WAAPITransfer::s_originalPathHistory = std::unordered_set<std::string>{};
+std::unordered_set<fs::path> WAAPITransfer::s_originalPathHistory = std::unordered_set<fs::path>{};
 
 bool WAAPITransfer::s_copyFilesToWwiseOriginals = true;

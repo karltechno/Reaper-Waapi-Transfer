@@ -12,7 +12,8 @@ WAAPIRecall::WAAPIRecall(HWND hwnd, int recallListId, int statusTextId)
     : hwnd(hwnd)
     , m_recallListId(recallListId)
     , m_statusTextId(statusTextId)
-{}
+{
+}
 
 void WAAPIRecall::UpdateWwiseObjects()
 {
@@ -22,7 +23,7 @@ void WAAPIRecall::UpdateWwiseObjects()
     {
         return;
     }
-    
+
     AkJson::Array resultsArray;
     GetWaapiResultsArray(resultsArray, results);
 
@@ -54,8 +55,8 @@ void WAAPIRecall::UpdateWwiseObjects()
             return;
         }
 
-        validItem.wwiseGuid   = item["id"].GetVariant().GetString();
-        validItem.wwiseName   = item["name"].GetVariant().GetString();
+        validItem.wwiseGuid = item["id"].GetVariant().GetString();
+        validItem.wwiseName = item["name"].GetVariant().GetString();
 
         validItems.push_back(validItem);
     };
@@ -98,7 +99,7 @@ void WAAPIRecall::UpdateWwiseObjects()
         else if (itemType == "AudioFileSource")
         {
             RecallItemInserter(itemAkMap);
-        }   
+        }
     }
 
     //delete items not in new selection
@@ -108,8 +109,8 @@ void WAAPIRecall::UpdateWwiseObjects()
     {
         auto found = std::find_if(validItems.begin(),
                                   validItems.end(),
-                                  [it](const RecallItem &item) 
-                                  { return item.wwiseGuid == it->second.wwiseGuid; });
+                                  [it](const RecallItem &item)
+        { return item.wwiseGuid == it->second.wwiseGuid; });
 
         if (found == validItems.end())
         {
@@ -208,8 +209,8 @@ WAAPIRecall::RecallMap::iterator WAAPIRecall::RemoveRecallItem(const std::string
 {
     auto found = std::find_if(m_mappedIdToRecallObject.begin(),
                               m_mappedIdToRecallObject.end(),
-                              [&wwiseGuid](const std::pair<uint32, RecallItem> &item) 
-                              { return item.second.wwiseGuid == wwiseGuid; });
+                              [&wwiseGuid](const std::pair<uint32, RecallItem> &item)
+    { return item.second.wwiseGuid == wwiseGuid; });
 
     return RemoveRecallItem(found);
 }
