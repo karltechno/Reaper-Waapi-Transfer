@@ -23,6 +23,30 @@
 
 #include <shobjidl.h> 
 
+struct CStr_Eq
+{
+    bool operator()(char const* lhs, char const* rhs) const
+    {
+        return strcmp(lhs, rhs) == 0;
+    }
+};
+
+struct CStr_Hash
+{
+    unsigned operator()(char const* str) const
+    {
+        // dbj2
+        unsigned long hash = 5381;
+
+        while (int c = *str++)
+        {
+            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        }
+
+        return hash;
+    }
+};
+
 template <typename Data>
 struct ImGuiTableHeader
 {
@@ -766,18 +790,6 @@ static void DoMenuBar(WAAPITransfer& transfer)
         ImGui::EndPopup();
     }
 
-    if (ImGui::BeginPopup("OriginalsPath"))
-    {
-        if (ImGui::Button("Open Folder"))
-        {
-            BrowseForFolder();
-        }
-        //transfer.s_copyFilesToWwiseOriginals
-            //ImGui::Text("%s");
-        //ImGui::Text("WAAPI Transfer Version: %u.%u.%u", WT_VERSION_MAJOR, WT_VERSION_MINOR, WT_VERSION_INCREMENTAL);
-        ImGui::EndPopup();
-    }
-
     ImGui::EndMenuBar();
 }
 
@@ -1028,6 +1040,33 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
                 openSetWwiseParentPopup = true;
             }
 
+            if (ImGui::BeginMenu("Set Originals Path"))
+            {
+                if (ImGui::Button("Browse..."))
+                {
+                    // TODO: Robust path handling.
+                    std::string path = BrowseForFolder().generic_string();
+                    transfer.ForEachSelectedRenderItem([&path](RenderItem& item) { item.wwiseOriginalsSubpath = path; });
+                    WAAPITransfer::s_originalPathHistory.insert(path);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::Separator();
+                std::unordered_set<char const*, CStr_Hash, CStr_Eq> selectedOriginals;
+                transfer.ForEachSelectedRenderItem([&selectedOriginals](RenderItem& item) { selectedOriginals.insert(item.wwiseOriginalsSubpath.c_str()); });
+
+                for (std::string const& str : WAAPITransfer::s_originalPathHistory)
+                {
+                    bool const selected = selectedOriginals.find(str.c_str()) != selectedOriginals.end();
+                    if (ImGui::MenuItem(str.c_str(), nullptr, selected))
+                    {
+                        transfer.ForEachSelectedRenderItem([&str](RenderItem& item) { item.wwiseOriginalsSubpath = str; });
+                    }
+                }
+
+                ImGui::EndMenu();
+            }
+
+
             if (ImGui::BeginMenu("Import Operation"))
             {
                 if (ImGui::MenuItem("Create New"))
@@ -1047,7 +1086,6 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 
                 ImGui::EndMenu();
             }
-
 
             if (ImGui::BeginMenu("Import Type"))
             {
@@ -1090,6 +1128,13 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
         if (ImGui::BeginPopup("SetWwiseParentPopup"))
         {
             DoWwiseParentPopup(transfer);
+            ImGui::EndPopup();
+        }
+
+        if (ImGui::BeginPopup("OriginalsPopup"))
+        {
+
+
             ImGui::EndPopup();
         }
     }
