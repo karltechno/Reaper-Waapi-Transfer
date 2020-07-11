@@ -124,7 +124,7 @@ public:
     // object owns this hwnd
     HWND hwnd;
 	// recently entered wwise original subpaths
-	static std::unordered_set<fs::path> s_originalPathHistory;
+	static std::unordered_set<std::string> s_originalPathHistory;
 
     //Window id's
     int m_statusTextId;

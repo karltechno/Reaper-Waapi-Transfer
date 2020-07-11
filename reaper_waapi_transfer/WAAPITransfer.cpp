@@ -728,6 +728,6 @@ uint32 WAAPITransfer::s_RenderItemIdCounter = 0;
 
 WAAPIImportOperation WAAPITransfer::lastImportOperation = WAAPIImportOperation::createNew;
 
-std::unordered_set<fs::path> WAAPITransfer::s_originalPathHistory = std::unordered_set<fs::path>{};
+std::unordered_set<std::string> WAAPITransfer::s_originalPathHistory = std::unordered_set<std::string>{};
 
 bool WAAPITransfer::s_copyFilesToWwiseOriginals = true;

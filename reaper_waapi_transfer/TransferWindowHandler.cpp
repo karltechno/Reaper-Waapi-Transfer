@@ -23,9 +23,17 @@
 
 #include <shobjidl.h> 
 
+template <typename Data>
 struct ImGuiTableHeader
 {
-    char const* const* colNames;
+    using GetColumnStringFn = char const*(*)(Data const&);
+    struct Column
+    {
+        char const* name;
+        GetColumnStringFn getColumnFn;
+    };
+
+    Column const* cols;
     int sortColIdx = 0;
     int numCols = 0;
     ImGuiDir sortColDir = ImGuiDir_Down;
@@ -34,8 +42,8 @@ struct ImGuiTableHeader
 struct TransferWindowState
 {
     ImGuiTextFilter wwiseObjectFilter;
-    ImGuiTableHeader renderQueueHeader;
-    ImGuiTableHeader wwiseObjectHeader;
+    ImGuiTableHeader<RenderItem> renderQueueHeader;
+    ImGuiTableHeader<WwiseObject> wwiseObjectHeader;
 };
 
 static TransferWindowState g_transferWindowState;
@@ -760,23 +768,27 @@ static void DoMenuBar(WAAPITransfer& transfer)
 
     if (ImGui::BeginPopup("OriginalsPath"))
     {
-        transfer.s_copyFilesToWwiseOriginals
-            ImGui::Text("%s");
-        ImGui::Text("WAAPI Transfer Version: %u.%u.%u", WT_VERSION_MAJOR, WT_VERSION_MINOR, WT_VERSION_INCREMENTAL);
+        if (ImGui::Button("Open Folder"))
+        {
+            BrowseForFolder();
+        }
+        //transfer.s_copyFilesToWwiseOriginals
+            //ImGui::Text("%s");
+        //ImGui::Text("WAAPI Transfer Version: %u.%u.%u", WT_VERSION_MAJOR, WT_VERSION_MINOR, WT_VERSION_INCREMENTAL);
         ImGui::EndPopup();
     }
 
     ImGui::EndMenuBar();
 }
 
-
-void DoImGuiTableHeader(ImGuiTableHeader& hdr)
+template <typename T>
+void DoImGuiTableHeader(ImGuiTableHeader<T>& hdr)
 {
     for (int i = 0; i < hdr.numCols; ++i)
     {
         ImGuiDir dir = hdr.sortColIdx == i ? hdr.sortColDir : ImGuiDir_Right;
 
-        bool arrowClicked = ImGui::ArrowButton(hdr.colNames[i], dir); ImGui::SameLine(); ImGui::Text(hdr.colNames[i]);
+        bool arrowClicked = ImGui::ArrowButton(hdr.cols[i].name, dir); ImGui::SameLine(); ImGui::Text(hdr.cols[i].name);
         ImGui::NextColumn();
         if (arrowClicked)
         {
@@ -790,7 +802,7 @@ void DoImGuiTableHeader(ImGuiTableHeader& hdr)
     }
 }
 
-std::vector<WwiseObject*> GetSortedWwiseObjects(WAAPITransfer& transfer, ImGuiTableHeader& hdr, ImGuiTextFilter* filter = nullptr)
+std::vector<WwiseObject*> GetSortedWwiseObjects(WAAPITransfer& transfer, ImGuiTableHeader<WwiseObject>& hdr, ImGuiTextFilter* filter = nullptr)
 {
     std::vector<WwiseObject*> sortedObjects;
     sortedObjects.reserve(transfer.s_activeWwiseObjects.size());
@@ -803,41 +815,53 @@ std::vector<WwiseObject*> GetSortedWwiseObjects(WAAPITransfer& transfer, ImGuiTa
         }
     }
 
-    switch (hdr.sortColIdx)
-    {
-        case 0: // Name
-        {
-            std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->name < rhs->name; });
-        } break;
+    auto getStrFn = hdr.cols[hdr.sortColIdx].getColumnFn;
+    auto sortLt = [getStrFn](WwiseObject* lhs, WwiseObject* rhs) { return strcmp(getStrFn(*lhs), getStrFn(*rhs)) < 0; };
+    auto sortGt = [getStrFn](WwiseObject* lhs, WwiseObject* rhs) { return strcmp(getStrFn(*lhs), getStrFn(*rhs)) > 0; };
 
-        case 1: // Path
-        {
-            std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->path < rhs->path; });
-        } break;
-
-        case 2: // Type
-        {
-            std::stable_sort(sortedObjects.begin(), sortedObjects.end(), [](WwiseObject* lhs, WwiseObject* rhs) { return lhs->type < rhs->type; });
-        } break;
-    }
-
-    // TODO
+    bool const doSortGt = hdr.sortColDir == ImGuiDir_Up;
     if (hdr.sortColDir == ImGuiDir_Up)
     {
-        std::reverse(sortedObjects.begin(), sortedObjects.end());
+        std::stable_sort(sortedObjects.begin(), sortedObjects.end(), sortGt);
     }
+    else
+    {
+        std::stable_sort(sortedObjects.begin(), sortedObjects.end(), sortLt);
+    }
+   
 
     return sortedObjects;
+}
+
+template <typename T>
+void DoColumnTooltip(T const& item, ImGuiTableHeader<T> const& hdr)
+{
+    float const mouseX = ImGui::GetMousePos().x;
+    float x0 = ImGui::GetWindowContentRegionMin().x + ImGui::GetWindowPos().x;
+
+    // Work out the correct column and display text for that.
+    for (int i = 0; i < hdr.numCols; ++i)
+    {
+        float x1 = x0 + ImGui::GetColumnWidth(i);
+        if (mouseX >= x0 && mouseX < x1)
+        {
+            char const* str = hdr.cols[i].getColumnFn(item);
+            if (str[0] != '\0')
+            {
+                ImGui::SetTooltip("%s", str);
+            }
+            break;
+        }
+        x0 = x1;
+    }
 }
 
 void DoWwiseObjectWindow(WAAPITransfer& transfer)
 {
     if (ImGui::BeginChild("WwiseObjects"))
     {
-        ImGuiTableHeader& hdr = g_transferWindowState.wwiseObjectHeader;
-
-        assert(hdr.numCols == 3);
-        ImGui::Columns(3);
+        ImGuiTableHeader<WwiseObject>& hdr = g_transferWindowState.wwiseObjectHeader;
+        ImGui::Columns(hdr.numCols);
         DoImGuiTableHeader(hdr);
 
         std::vector<WwiseObject*> sortedObjects = GetSortedWwiseObjects(transfer, hdr, nullptr);
@@ -845,12 +869,20 @@ void DoWwiseObjectWindow(WAAPITransfer& transfer)
         for (std::vector<WwiseObject*>::iterator it = sortedObjects.begin(); it != sortedObjects.end(); ++it)
         {
             WwiseObject* obj = (*it);
+
             ImGui::Selectable(obj->name.c_str(), &obj->isSelectedImGui, ImGuiSelectableFlags_SpanAllColumns);
+            if (ImGui::IsItemHovered())
+            {
+                DoColumnTooltip(*obj, hdr);
+            }
+
             ImGui::NextColumn();
-            ImGui::Text("%s", obj->path.c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", obj->type.c_str());
-            ImGui::NextColumn();
+
+            for (int i = 1; i < hdr.numCols; ++i)
+            {
+                ImGui::Text("%s", hdr.cols[i].getColumnFn(*obj));
+                ImGui::NextColumn();
+            }
         }
 
         ImGui::Columns();
@@ -866,11 +898,10 @@ void DoWwiseObjectWindow(WAAPITransfer& transfer)
 
 static void DoWwiseParentPopup(WAAPITransfer& transfer)
 {
-    ImGuiTableHeader& hdr = g_transferWindowState.wwiseObjectHeader;
+    ImGuiTableHeader<WwiseObject>& hdr = g_transferWindowState.wwiseObjectHeader;
 
-    assert(hdr.numCols == 3);
     g_transferWindowState.wwiseObjectFilter.Draw();
-    ImGui::Columns(3);
+    ImGui::Columns(hdr.numCols);
     DoImGuiTableHeader(hdr);
 
     std::vector<WwiseObject*> sortedObjects = GetSortedWwiseObjects(transfer, hdr, &g_transferWindowState.wwiseObjectFilter);
@@ -883,29 +914,35 @@ static void DoWwiseParentPopup(WAAPITransfer& transfer)
         {
             transfer.SetSelectedRenderParents(obj->guid);
         }
+        if (ImGui::IsItemHovered())
+        {
+            DoColumnTooltip(*obj, hdr);
+        }
+
         ImGui::NextColumn();
-        ImGui::Text("%s", obj->path.c_str());
-        ImGui::NextColumn();
-        ImGui::Text("%s", obj->type.c_str());
-        ImGui::NextColumn();
+
+        for (int i = 1; i < hdr.numCols; ++i)
+        {
+            ImGui::Text("%s", hdr.cols[i].getColumnFn(*obj));
+            ImGui::NextColumn();
+        }
     }
 
     ImGui::Columns();
 }
 
 
+
 static void DoRenderQueueWindow(WAAPITransfer& transfer)
 {
     if (ImGui::BeginChild("RenderQueue", ImVec2(0.0f, -25.0f)))
     {
-        ImGuiTableHeader& hdr = g_transferWindowState.renderQueueHeader;
+        ImGuiTableHeader<RenderItem>& hdr = g_transferWindowState.renderQueueHeader;
 
         ImGuiIO const& io = ImGui::GetIO();
 
-        assert(hdr.numCols == 5);
-        ImGui::Columns(5);
+        ImGui::Columns(hdr.numCols);
         DoImGuiTableHeader(hdr);
-
         std::vector<RenderItem*> sortedObjects;
         sortedObjects.reserve(transfer.s_renderQueueItems.size());
         for (auto it = transfer.s_renderQueueItems.begin(); it != transfer.s_renderQueueItems.end(); ++it)
@@ -913,79 +950,33 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
             sortedObjects.push_back(&it->second.first);
         }
 
-        bool(*sortFn)(RenderItem*, RenderItem*) = nullptr;
-        bool const reverse = hdr.sortColDir == ImGuiDir_Up;
-        switch (hdr.sortColIdx)
+        auto getStrFn = hdr.cols[hdr.sortColIdx].getColumnFn;
+        auto sortLt = [getStrFn](RenderItem* lhs, RenderItem* rhs) { return strcmp(getStrFn(*lhs), getStrFn(*rhs)) < 0; };
+        auto sortGt = [getStrFn](RenderItem* lhs, RenderItem* rhs) { return strcmp(getStrFn(*lhs), getStrFn(*rhs)) > 0; };
+
+        bool const doSortGt = hdr.sortColDir == ImGuiDir_Up;
+        if (hdr.sortColDir == ImGuiDir_Up)
         {
-            case 0: // File
-            {
-                if (reverse)
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return (lhs->outputFileName > rhs->outputFileName); };
-                }
-                else
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return (lhs->outputFileName < rhs->outputFileName); };
-                }
-            } break;
-
-            case 1: // Path
-            {
-                if (reverse)
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return (lhs->wwiseParentName > rhs->wwiseParentName); };
-                }
-                else
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return (lhs->wwiseParentName < rhs->wwiseParentName); };
-                }
-            } break;
-
-            case 2: // Import Type
-            {
-                if (reverse)
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return uint32(lhs->importObjectType) > uint32(rhs->importObjectType); };
-                }
-                else
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return uint32(lhs->importObjectType) < uint32(rhs->importObjectType); };
-                }
-            } break;
-
-            case 3: // Language
-            {
-                if (reverse)
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return strcmp(WwiseLanguages[lhs->wwiseLanguageIndex], WwiseLanguages[rhs->wwiseLanguageIndex]) > 0;  };
-                }
-                else
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return strcmp(WwiseLanguages[lhs->wwiseLanguageIndex], WwiseLanguages[rhs->wwiseLanguageIndex]) < 0;  };
-                }
-            } break;
-
-            case 4: // Import op
-            {
-                if (reverse)
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return uint32(lhs->importOperation) > uint32(rhs->importOperation); };
-                }
-                else
-                {
-                    sortFn = [](RenderItem* lhs, RenderItem* rhs) { return uint32(lhs->importOperation) < uint32(rhs->importOperation); };
-                }
-            } break;
+            std::stable_sort(sortedObjects.begin(), sortedObjects.end(), sortGt);
         }
-
-        std::stable_sort(sortedObjects.begin(), sortedObjects.end(), sortFn);
+        else
+        {
+            std::stable_sort(sortedObjects.begin(), sortedObjects.end(), sortLt);
+        }
 
         for (RenderItem* obj : sortedObjects)
         {
             bool selected = ImGui::Selectable(obj->outputFileName.c_str(), obj->isSelectedImGui, ImGuiSelectableFlags_SpanAllColumns);
+            if (ImGui::IsItemHovered())
+            {
+                DoColumnTooltip(*obj, hdr);
+            }
+
             bool rightClicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
 
             ImGui::OpenPopupContextItem("RenderQueuePopup", ImGuiPopupFlags_MouseButtonRight);
+
+            ImGui::NextColumn();
 
             if (selected)
             {
@@ -1018,15 +1009,12 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
                 obj->isSelectedImGui = true;
             }
 
-            ImGui::NextColumn();
-            ImGui::Text("%s", obj->wwiseParentName.c_str());
-            ImGui::NextColumn();
-            ImGui::Text("%s", GetTextForImportObject(obj->importObjectType));
-            ImGui::NextColumn();
-            ImGui::Text("%s", WwiseLanguages[obj->wwiseLanguageIndex]);
-            ImGui::NextColumn();
-            ImGui::Text("%s", GetImportOperationString(obj->importOperation));
-            ImGui::NextColumn();
+            for (int i = 1; i < hdr.numCols; ++i)
+            {
+                char const* str = hdr.cols[i].getColumnFn(*obj);
+                ImGui::Text("%s", str);
+                ImGui::NextColumn();
+            }
         }
 
         ImGui::Columns();
@@ -1115,7 +1103,7 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 
 static void TransferThreadFn()
 {
-    if (!ImGuiHandler::InitWindow("Reaper Waapi Transfer", 640, 480))
+    if (!ImGuiHandler::InitWindow("Reaper Waapi Transfer", 900, 480))
     {
         // TODO: Error
         return;
@@ -1126,15 +1114,28 @@ static void TransferThreadFn()
     WAAPITransfer transfer;
 
     {
-        static char const* const wwiseObjColNames[] = { "Name", "Path", "Type" };
-        g_transferWindowState.wwiseObjectHeader.colNames = wwiseObjColNames;
-        g_transferWindowState.wwiseObjectHeader.numCols = int(sizeof(wwiseObjColNames) / sizeof(*wwiseObjColNames));
+        static ImGuiTableHeader<WwiseObject>::Column const cols[] =
+        {
+            "Name", [](WwiseObject const& obj) { return obj.name.c_str(); },
+            "Path", [](WwiseObject const& obj) { return obj.path.c_str(); },
+            "Type", [](WwiseObject const& obj) { return obj.type.c_str(); }
+        };
+        g_transferWindowState.wwiseObjectHeader.cols = cols;
+        g_transferWindowState.wwiseObjectHeader.numCols = int(sizeof(cols) / sizeof(*cols));
     }
 
     {
-        static char const* const renderItemColNames[] = { "File", "Wwise Parent", "Import Type", "Language", "Import Op" };
-        g_transferWindowState.renderQueueHeader.colNames = renderItemColNames;
-        g_transferWindowState.renderQueueHeader.numCols = int(sizeof(renderItemColNames) / sizeof(*renderItemColNames));
+        static ImGuiTableHeader<RenderItem>::Column const cols[] =
+        {
+            "File",             [](RenderItem const& obj) { return obj.outputFileName.c_str(); },
+            "Wwise Parent",     [](RenderItem const& obj) { return obj.wwiseParentName.c_str(); },
+            "Import Type",      [](RenderItem const& obj) { return GetTextForImportObject(obj.importObjectType); },
+            "Language",         [](RenderItem const& obj) { return WwiseLanguages[obj.wwiseLanguageIndex]; },
+            "Import Op",        [](RenderItem const& obj) { return GetImportOperationString(obj.importOperation); },
+            "Originals Path",   [](RenderItem const& obj) { return obj.wwiseOriginalsSubpath.c_str(); },
+        };
+        g_transferWindowState.renderQueueHeader.cols = cols;
+        g_transferWindowState.renderQueueHeader.numCols = int(sizeof(cols) / sizeof(*cols));
     }
 
     while (!glfwWindowShouldClose(ImGuiHandler::GetGLFWWindow()))
