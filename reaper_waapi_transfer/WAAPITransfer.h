@@ -65,7 +65,7 @@ public:
     void CancelTransferThread() { m_closeTransferThreadByUser = true; }
 
     //Set status message at bottom of window
-    void SetStatusText(const std::string &status) const;
+    void SetStatusText(const std::string &status);
 
     //add objects selected in Wwise authoring app to the wwise object view
     void AddSelectedWwiseObjects();
@@ -153,6 +153,7 @@ public:
     static WwiseObjectMap s_activeWwiseObjects;
 
 	static bool s_copyFilesToWwiseOriginals;
+    static bool s_recreateRenderQueue;
 
     //----------------------------------------------------------------
 
@@ -187,6 +188,7 @@ public:
 	bool m_connectionStatus = false;
 
 	std::string m_connectedWwiseVersion;
+    std::string m_status;
 
 	std::atomic<bool> m_isTransferring = false;
 	std::atomic<int> m_transferProgress = 0;

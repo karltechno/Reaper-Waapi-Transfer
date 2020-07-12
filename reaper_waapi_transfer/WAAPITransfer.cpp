@@ -233,8 +233,9 @@ void WAAPITransfer::RunRenderQueueAndImport()
     m_transferProgress.store(0, std::memory_order_relaxed);
 }
 
-void WAAPITransfer::SetStatusText(const std::string &status) const
+void WAAPITransfer::SetStatusText(const std::string &status)
 {
+    m_status = status;
     //SetWindowText(GetStatusTextHWND(), status.c_str());
 }
 
@@ -447,12 +448,18 @@ void WAAPITransfer::WaapiImportLoop()
                 int progressBarStep = static_cast<int>
                     ((++numItemsProcessed / (float)(totalRenderItems * 100.0f)));
 
+                bool restoreBackup = s_recreateRenderQueue;
+
+                // TODO: Handle FS errors properly.
                 if (WaapiImportByProject(iter->first, projSourceNote))
                 {
                     m_transferProgress.store(progressBarStep, std::memory_order_relaxed);
 
                     //success, delete backup
-                    fs::remove(iter->first + RENDER_QUEUE_BACKUP_APPEND);
+                    if (!restoreBackup)
+                    {
+                        fs::remove(iter->first + RENDER_QUEUE_BACKUP_APPEND);
+                    }
 
                     //if we aren't copying then we should delete files in the reaper export folder
                     if (!ShouldCopyToOriginals())
@@ -462,8 +469,6 @@ void WAAPITransfer::WaapiImportLoop()
                             fs::remove(GetRenderItemFromRenderItemId(id).audioFilePath);
                         }
                     }
-
-                    iter = renderQueueProjectsCopy.erase(iter);
                 }
                 else
                 {
@@ -473,9 +478,15 @@ void WAAPITransfer::WaapiImportLoop()
                     allImportsSucceeded = false;
 
                     //restore this backup, something failed
-                    backupsToRestore.push_back(iter->first);
-                    iter = renderQueueProjectsCopy.erase(iter);
+                    restoreBackup = true;
                 }
+
+                if (restoreBackup)
+                {
+                    backupsToRestore.push_back(iter->first);
+                }
+
+                iter = renderQueueProjectsCopy.erase(iter);
 
                 //if empty we are done
                 if (renderQueueProjectsCopy.empty())
@@ -731,3 +742,4 @@ WAAPIImportOperation WAAPITransfer::lastImportOperation = WAAPIImportOperation::
 std::unordered_set<std::string> WAAPITransfer::s_originalPathHistory = std::unordered_set<std::string>{};
 
 bool WAAPITransfer::s_copyFilesToWwiseOriginals = true;
+bool WAAPITransfer::s_recreateRenderQueue = false;

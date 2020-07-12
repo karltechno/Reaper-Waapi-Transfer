@@ -68,6 +68,8 @@ struct TransferWindowState
     ImGuiTextFilter wwiseObjectFilter;
     ImGuiTableHeader<RenderItem> renderQueueHeader;
     ImGuiTableHeader<WwiseObject> wwiseObjectHeader;
+
+    char originalsPathBuff[MAX_PATH] = {};
 };
 
 static TransferWindowState g_transferWindowState;
@@ -756,30 +758,30 @@ static void DoMenuBar(WAAPITransfer& transfer)
 {
     ImGui::BeginMenuBar();
 
-    if (transfer.m_connectionStatus)
-    {
-        ImGui::Text("Connected: %s", transfer.m_connectedWwiseVersion.c_str());
-    }
-    else
-    {
-        ImGui::Text("Not Connected");
-    }
-
     if (ImGui::BeginMenu("Options"))
     {
-        if (ImGui::MenuItem("Set Originals Path"))
-        {
-            ImGui::OpenPopup("OriginalsPath");
-        }
+        ImGui::Checkbox("Copy to orignals", &transfer.s_copyFilesToWwiseOriginals);
+        ImGui::Checkbox("Recreate render queue", &transfer.s_recreateRenderQueue);
         ImGui::EndMenu();
     }
 
-    if (ImGui::Button("Reconnect"))
+    bool amIConnected = transfer.m_connectionStatus;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, amIConnected ? ImVec4(0.0f, 1.0f, 0.0f, 1.0f) : ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    if (ImGui::MenuItem("Reconnect"))
     {
         transfer.Connect();
     }
 
-    if (ImGui::Button("About"))
+    if (ImGui::IsItemHovered() && amIConnected)
+    {
+        ImGui::SetTooltip("Connected: %s", transfer.m_connectedWwiseVersion.c_str());
+    }
+
+    ImGui::PopStyleColor();
+
+    if (ImGui::MenuItem("About"))
     {
         ImGui::OpenPopup("AboutPopup");
     }
@@ -1042,14 +1044,32 @@ static void DoRenderQueueWindow(WAAPITransfer& transfer)
 
             if (ImGui::BeginMenu("Set Originals Path"))
             {
-                if (ImGui::Button("Browse..."))
+                auto textValidFn = [](ImGuiInputTextCallbackData *data) -> int
                 {
-                    // TODO: Robust path handling.
-                    std::string path = BrowseForFolder().generic_string();
-                    transfer.ForEachSelectedRenderItem([&path](RenderItem& item) { item.wwiseOriginalsSubpath = path; });
-                    WAAPITransfer::s_originalPathHistory.insert(path);
-                    ImGui::CloseCurrentPopup();
+                    static ImWchar const invalidChars[] = { '<', '>', ':', '"', '|', '?', '*' };
+                    for (ImWchar c : invalidChars)
+                    {
+                        if (data->EventChar == c)
+                        {
+                            return 1;
+                        }
+                    };
+
+                    return 0;
+                };
+
+                if (ImGui::Button("Add New"))
+                {
+                    // TODO Validate path.
+                    std::string str(g_transferWindowState.originalsPathBuff);
+                    transfer.ForEachSelectedRenderItem([&str](RenderItem& item) { item.wwiseOriginalsSubpath = str; });
+                    transfer.s_originalPathHistory.insert(str);
+                    g_transferWindowState.originalsPathBuff[0] = '\0';
                 }
+
+                ImGui::SameLine();
+                ImGui::InputText("##originalspath", g_transferWindowState.originalsPathBuff, sizeof g_transferWindowState.originalsPathBuff, ImGuiInputTextFlags_CallbackCharFilter, textValidFn);
+
                 ImGui::Separator();
                 std::unordered_set<char const*, CStr_Hash, CStr_Eq> selectedOriginals;
                 transfer.ForEachSelectedRenderItem([&selectedOriginals](RenderItem& item) { selectedOriginals.insert(item.wwiseOriginalsSubpath.c_str()); });
@@ -1208,7 +1228,11 @@ static void TransferThreadFn()
         ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
         ImGui::Begin("ReaperWaapiTransfer", nullptr, windowFlags);
+        DoMenuBar(transfer);
+
+        ImGui::BeginChild("MainTransferChild", ImVec2(0.0f, -ImGui::GetTextLineHeight()));
 
         if (ImGui::BeginPopupModal("Transferring", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize))
         {
@@ -1225,8 +1249,6 @@ static void TransferThreadFn()
             }
             ImGui::EndPopup();
         }
-
-        DoMenuBar(transfer);
         if (ImGui::BeginTabBar("Tabs"))
         {
             if (ImGui::BeginTabItem("Render Queue"))
@@ -1247,6 +1269,10 @@ static void TransferThreadFn()
         {
             ImGui::OpenPopup("Transferring");
         }
+
+        ImGui::EndChild();
+
+        ImGui::Text("%s", transfer.m_status.c_str());
 
         ImGui::End();
         ImGui::PopStyleVar(2);
