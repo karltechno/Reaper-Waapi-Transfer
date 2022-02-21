@@ -185,7 +185,8 @@ bool GetChildren(const AK::WwiseAuthoringAPI::AkVariant &path,
 
 bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items, 
                       AK::WwiseAuthoringAPI::Client &client, 
-                      WAAPIImportOperation importOperation)
+                      WAAPIImportOperation importOperation,
+                      bool autoAddToSourceControl)
 {
     using namespace AK::WwiseAuthoringAPI;
 
@@ -193,8 +194,10 @@ bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
         { "importOperation", AkVariant(GetImportOperationString(importOperation)) },
         { "default", AkJson::Map{
             { "importLanguage", AkVariant("SFX") }
-    } },
-    { "imports", items }
+            }
+        },
+        { "imports", items },
+        { "autoAddToSourceControl", AkVariant(autoAddToSourceControl)}
     });
     AkJson result;
 
