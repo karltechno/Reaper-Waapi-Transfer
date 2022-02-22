@@ -103,14 +103,10 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			g_transferWindow = hwndDlg;
 
 			HWND button = GetDlgItem(hwndDlg, IDC_COPY_FILES_TO_ORIGINALS);
-			if (transfer->ShouldCopyToOriginals())
-			{
-				Button_SetCheck(button, BST_CHECKED);
-			}
-			else
-			{
-				Button_SetCheck(button, BST_UNCHECKED);
-			}
+			Button_SetCheck(button, transfer->ShouldCopyToOriginals() ? BST_CHECKED : BST_UNCHECKED);
+
+			button = GetDlgItem(hwndDlg, IDC_AUTO_MARK_FOR_ADD);
+			Button_SetCheck(button, transfer->ShouldAutoMarkForAdd() ? BST_CHECKED : BST_UNCHECKED);
 
 			transfer->SetupAndRecreateWindow();
 
@@ -204,15 +200,13 @@ INT_PTR WINAPI TransferWindowProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 				case IDC_COPY_FILES_TO_ORIGINALS:
 				{
 					LRESULT checked = Button_GetCheck(GetDlgItem(hwndDlg, IDC_COPY_FILES_TO_ORIGINALS));
-					if (checked == BST_CHECKED)
-					{
-						transfer->SetShouldCopyToOriginals(true);
-					}
-					else if (checked == BST_UNCHECKED)
-					{
-						transfer->SetShouldCopyToOriginals(false);
-					}
+					transfer->SetShouldCopyToOriginals(checked == BST_CHECKED);
+				} break;
 
+				case IDC_AUTO_MARK_FOR_ADD:
+				{
+					LRESULT checked = Button_GetCheck(GetDlgItem(hwndDlg, IDC_AUTO_MARK_FOR_ADD));
+					transfer->SetShouldAutoMarkForAdd(checked == BST_CHECKED);
 				} break;
 
 				default:

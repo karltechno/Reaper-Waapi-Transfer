@@ -827,15 +827,15 @@ bool WAAPITransfer::WaapiImportByProject(RenderProjectMap::iterator projectIter,
         }
         if (!itemsCreateNew.empty())
         {
-            if (!WaapiImportItems(itemsCreateNew, m_client, WAAPIImportOperation::createNew)) allSucceeded = false;
+            if (!WaapiImportItems(itemsCreateNew, m_client, WAAPIImportOperation::createNew, ShouldAutoMarkForAdd())) allSucceeded = false;
         }
         if (!itemsReplaceExisting.empty())
         {
-            if (!WaapiImportItems(itemsReplaceExisting, m_client, WAAPIImportOperation::replaceExisting)) allSucceeded = false;
+            if (!WaapiImportItems(itemsReplaceExisting, m_client, WAAPIImportOperation::replaceExisting, ShouldAutoMarkForAdd())) allSucceeded = false;
         }
         if (!itemsUseExisting.empty())
         {
-            if (!WaapiImportItems(itemsUseExisting, m_client, WAAPIImportOperation::useExisting)) allSucceeded = false;
+            if (!WaapiImportItems(itemsUseExisting, m_client, WAAPIImportOperation::useExisting, ShouldAutoMarkForAdd())) allSucceeded = false;
         }
     }
 
@@ -962,4 +962,5 @@ WAAPIImportOperation WAAPITransfer::lastImportOperation = WAAPIImportOperation::
 
 std::unordered_set<std::string> WAAPITransfer::s_originalPathHistory = std::unordered_set<std::string>{};
 
-bool WAAPITransfer::s_copyFilesToWwiseOriginals = true;
+bool WAAPITransfer::s_copyFilesToWwiseOriginals = false;
+bool WAAPITransfer::s_autoMarkForAdd = true;

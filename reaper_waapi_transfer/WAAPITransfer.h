@@ -122,6 +122,9 @@ public:
 	bool ShouldCopyToOriginals() const { return s_copyFilesToWwiseOriginals; }
 	void SetShouldCopyToOriginals(const bool shouldCopy) { s_copyFilesToWwiseOriginals = shouldCopy; }
 
+	bool ShouldAutoMarkForAdd() const { return s_autoMarkForAdd; }
+	void SetShouldAutoMarkForAdd(const bool shouldAdd) { s_autoMarkForAdd = shouldAdd; }
+
     // last import operation selected 
     static WAAPIImportOperation lastImportOperation;
 
@@ -159,6 +162,7 @@ private:
     static WwiseObjectMap s_activeWwiseObjects;
 
 	static bool s_copyFilesToWwiseOriginals;
+	static bool s_autoMarkForAdd;
 
     //----------------------------------------------------------------
 

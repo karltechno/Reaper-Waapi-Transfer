@@ -44,7 +44,8 @@ inline const std::string &GetResultsErrorMessage(AK::WwiseAuthoringAPI::AkJson &
 //Import given items, returns if waapi call was successful
 bool WaapiImportItems(const AK::WwiseAuthoringAPI::AkJson::Array &items,
                       AK::WwiseAuthoringAPI::Client &client,
-                      WAAPIImportOperation importOperation);
+                      WAAPIImportOperation importOperation,
+                      bool autoAddToSourceControl);
 
 //////////////////////////////////////////////////////////////////////////
 
